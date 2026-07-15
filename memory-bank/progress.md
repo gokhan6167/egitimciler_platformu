@@ -18,3 +18,14 @@
 - Deploy yöntemi: `flutter build web --release --base-href /egitimciler_platformu/`
   → `build/web` içindeki yerel git repo'dan `gh-pages` dalına force push.
 - Yeniden deploy: aynı build komutu + `cd build/web; git add -A; git commit; git push --force https://github.com/gokhan6167/egitimciler_platformu.git gh-pages`
+
+## 2026-07-16 — Pusula Eğitim tasarım sistemi
+- Kaynak: Claude Design projesi "Eğitimciler Platformu Tasarımı" (4 dosya:
+  landing v2, ilan detay özel okul / dershane-etüt / özel öğretmen).
+- [x] Marka: Pusula Eğitim — yeşil #0F7A63, Plus Jakarta Sans + Public Sans
+  (google_fonts), pill butonlar; tema `lib/theme/pusula_theme.dart`.
+- [x] Landing page (`landing_screen.dart`) giriş öncesi ana sayfa oldu.
+- [x] İlan detay yeniden tasarlandı; tür bazlı varyantlar:
+  öğretmen (avatar + belgeler + paketler + uygunluk), dershane (programlar + etüt saatleri).
+- [x] Modeller: ProgramItem, OpeningHour, CredentialItem, highlight alanları.
+- [x] 9/9 test, analyze temiz, web build + Pages deploy tazelendi.
