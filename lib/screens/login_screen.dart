@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../models/models.dart';
 import '../state/app_state.dart';
+import '../theme/pusula_theme.dart';
 import 'home_shell.dart';
 
 /// Demo sign-in: pick one of the seeded users. Real auth comes later.
@@ -32,11 +33,11 @@ class LoginScreen extends StatelessWidget {
             shrinkWrap: true,
             padding: const EdgeInsets.all(24),
             children: [
-              const Icon(Icons.menu_book, size: 64, color: Colors.indigo),
-              const SizedBox(height: 8),
-              Text('Eğitimciler Platformu',
+              const Center(child: PusulaLogo(size: 56)),
+              const SizedBox(height: 16),
+              Text('Pusula Eğitim',
                   textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.headlineMedium),
+                  style: pusulaHeading(fontSize: 30, fontWeight: FontWeight.w800)),
               const SizedBox(height: 4),
               Text('Demo kullanıcı seçerek giriş yapın',
                   textAlign: TextAlign.center,

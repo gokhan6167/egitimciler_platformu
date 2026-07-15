@@ -6,10 +6,18 @@ import 'package:egitimciler_platformu/models/models.dart';
 import 'package:egitimciler_platformu/state/app_state.dart';
 
 void main() {
-  testWidgets('login screen shows demo users grouped by role', (tester) async {
+  testWidgets('landing page renders and leads to demo sign-in', (tester) async {
     await tester.pumpWidget(const EgitimcilerApp());
+    await tester.pump();
 
-    expect(find.text('Eğitimciler Platformu'), findsOneWidget);
+    // Hero from the Pusula design.
+    expect(find.text('Çocuğunuza en uygun eğitimi karşılaştırarak bulun.'),
+        findsOneWidget);
+    expect(find.text('Kayıt ol'), findsOneWidget);
+
+    // "Giriş yap" opens the demo sign-in screen.
+    await tester.tap(find.text('Giriş yap'));
+    await tester.pumpAndSettle();
     expect(find.text('Ayşe Yılmaz'), findsOneWidget); // parent
 
     // Institutions sit further down the list; scroll them into view.

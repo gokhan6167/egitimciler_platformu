@@ -75,6 +75,40 @@ class Review {
   final DateTime date;
 }
 
+/// A named program/package offered by a listing (e.g. "LGS Hazırlık").
+class ProgramItem {
+  const ProgramItem({
+    required this.title,
+    required this.price,
+    required this.description,
+    this.note = '',
+  });
+
+  final String title;
+  final String price;
+  final String description;
+
+  /// Short green highlight, e.g. "Kontenjan: son 6 kişi".
+  final String note;
+}
+
+/// Opening hours row for the sidebar card (e.g. etüt merkezi saatleri,
+/// öğretmen uygunluğu). Also reused for lesson-mode rows (label/value).
+class OpeningHour {
+  const OpeningHour(this.day, this.time);
+
+  final String day;
+  final String time;
+}
+
+/// Diploma/certificate row for teacher listings ("Eğitim & belgeler").
+class CredentialItem {
+  const CredentialItem(this.title, this.year);
+
+  final String title;
+  final String year;
+}
+
 /// A public listing page for a school, course, dershane or private teacher.
 class ProviderProfile {
   ProviderProfile({
@@ -89,9 +123,18 @@ class ProviderProfile {
     this.videoUrl,
     List<String>? features,
     List<Review>? reviews,
+    List<ProgramItem>? programs,
+    List<OpeningHour>? hours,
+    List<OpeningHour>? lessonModes,
+    List<CredentialItem>? credentials,
+    this.highlight,
   })  : photoUrls = photoUrls ?? [],
         features = features ?? [],
-        reviews = reviews ?? [];
+        reviews = reviews ?? [],
+        programs = programs ?? [],
+        hours = hours ?? [],
+        lessonModes = lessonModes ?? [],
+        credentials = credentials ?? [];
 
   final String id;
   final String ownerUserId;
@@ -106,6 +149,18 @@ class ProviderProfile {
   String? videoUrl;
   final List<String> features;
   final List<Review> reviews;
+  final List<ProgramItem> programs;
+  final List<OpeningHour> hours;
+
+  /// Teacher-specific: "Ders şekli" rows (mode label → coverage note).
+  final List<OpeningHour> lessonModes;
+
+  /// Teacher-specific: diplomas and certificates.
+  final List<CredentialItem> credentials;
+
+  /// Short green note under the sidebar price,
+  /// e.g. "Ücretsiz deneme dersi + seviye sınavı".
+  String? highlight;
 
   double get avgRating => reviews.isEmpty
       ? 0

@@ -6,6 +6,7 @@ import '../state/app_state.dart';
 import 'browse_screen.dart';
 import 'compare_screen.dart';
 import 'jobs_screen.dart';
+import 'landing_screen.dart';
 import 'login_screen.dart';
 import 'messages_screen.dart';
 import 'my_profile_screen.dart';
@@ -82,7 +83,7 @@ class _HomeShellState extends State<HomeShell> {
             onPressed: () {
               context.read<AppState>().signOut();
               Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (_) => const LoginScreen()),
+                MaterialPageRoute(builder: (_) => const LandingScreen()),
                 (_) => false,
               );
             },

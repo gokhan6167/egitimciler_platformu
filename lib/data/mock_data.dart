@@ -81,9 +81,30 @@ final List<ProviderProfile> seedProviders = [
         'Anaokulundan liseye kadar tam donanımlı kampüs. Yüzme havuzu, laboratuvarlar, '
         'yabancı dil ağırlıklı müfredat ve rehberlik servisi.',
     monthlyPrice: 25000,
-    photoUrls: [_pic(11), _pic(12), _pic(13)],
+    photoUrls: [_pic(11), _pic(12), _pic(13), _pic(14), _pic(15)],
     videoUrl: 'https://example.com/video/bilge-koleji-tanitim.mp4',
     features: ['Servis', 'Yemek', 'Yüzme Havuzu', 'Yabancı Dil Ağırlıklı', 'Rehberlik'],
+    highlight: '2026–27 kontenjanı: son 8 kişi',
+    programs: const [
+      ProgramItem(
+          title: 'Anaokulu',
+          price: '20.000 TL/ay',
+          description: 'Oyun temelli çift dilli okul öncesi programı.'),
+      ProgramItem(
+          title: 'İlkokul (1–4)',
+          price: '25.000 TL/ay',
+          description: 'Çift dilli müfredat, 12 kişilik sınıflar.',
+          note: 'Kardeş indirimi'),
+      ProgramItem(
+          title: 'Ortaokul (5–8)',
+          price: '27.000 TL/ay',
+          description: 'LGS hazırlık destekli akademik program.'),
+      ProgramItem(
+          title: 'Lise (9–12)',
+          price: '29.000 TL/ay',
+          description: 'YKS hazırlık, robotik ve proje laboratuvarları.',
+          note: 'Erken kayıt indirimi'),
+    ],
     reviews: [
       Review(
         id: 'r1',
@@ -113,9 +134,41 @@ final List<ProviderProfile> seedProviders = [
         'LGS ve YKS hazırlıkta 20 yıllık tecrübe. Haftalık deneme sınavları, '
         'birebir etüt ve koçluk sistemi.',
     monthlyPrice: 8000,
-    photoUrls: [_pic(21), _pic(22)],
+    photoUrls: [_pic(21), _pic(22), _pic(23), _pic(24)],
     videoUrl: 'https://example.com/video/zirve-tanitim.mp4',
     features: ['Deneme Sınavı', 'Birebir Etüt', 'Koçluk', 'Online Takip'],
+    highlight: 'Ücretsiz deneme dersi + seviye sınavı',
+    programs: const [
+      ProgramItem(
+          title: 'LGS Hazırlık (8. sınıf)',
+          price: '8.000 TL/ay',
+          description:
+              'Haftada 18 saat ders, haftalık deneme ve birebir soru çözümü.',
+          note: 'Kontenjan: son 12 kişi'),
+      ProgramItem(
+          title: 'YKS Hazırlık (TYT–AYT)',
+          price: '9.500 TL/ay',
+          description:
+              'Branş öğretmenleriyle tam program, rehberlik ve tercih desteği.',
+          note: 'Kontenjan: son 6 kişi'),
+      ProgramItem(
+          title: 'Etüt Merkezi (5–12. sınıf)',
+          price: '4.500 TL/ay',
+          description:
+              'Hafta içi her akşam ödev takibi, konu tekrarı ve soru çözümü.',
+          note: 'Esnek gün seçimi'),
+      ProgramItem(
+          title: 'Birebir Etüt Paketi',
+          price: '1.200 TL/saat',
+          description:
+              'Seçtiğiniz branşta birebir çalışma; 8 ve 16 saatlik paketler.',
+          note: 'Pakette %10 indirim'),
+    ],
+    hours: const [
+      OpeningHour('Hafta içi', '16:00 – 21:30'),
+      OpeningHour('Cumartesi', '09:00 – 18:00'),
+      OpeningHour('Pazar', 'Deneme sınavı'),
+    ],
     reviews: [
       Review(
         id: 'r3',
@@ -162,7 +215,41 @@ final List<ProviderProfile> seedProviders = [
     monthlyPrice: 6000,
     photoUrls: [_pic(41)],
     videoUrl: 'https://example.com/video/zeynep-tanitim.mp4',
-    features: ['Birebir Ders', 'Online Ders', 'LGS', 'YKS'],
+    features: ['Birebir Ders', 'Online Ders', 'LGS', 'YKS', 'Seviye Tespiti'],
+    highlight: 'İlk ders %50 indirimli · seviye tespiti dahil',
+    credentials: const [
+      CredentialItem('Boğaziçi Matematik Bölümü — Lisans', '2014'),
+      CredentialItem('Pedagojik formasyon sertifikası', '2015'),
+      CredentialItem('MEB özel öğretim kurumu çalışma belgesi', '2016'),
+      CredentialItem('Üstün zekâlılar eğitimi sertifika programı', '2022'),
+    ],
+    programs: const [
+      ProgramItem(
+          title: 'Tek ders',
+          price: '1.500 TL',
+          description: '60 dk birebir ders, ders sonu veli notu.'),
+      ProgramItem(
+          title: '8 ders paketi',
+          price: '11.000 TL',
+          description:
+              'Ders başı 1.375 TL. Haftalık plan ve deneme analizi dahil.',
+          note: 'En çok tercih edilen'),
+      ProgramItem(
+          title: '16 ders paketi',
+          price: '20.000 TL',
+          description: 'Ders başı 1.250 TL. Aylık veli görüşmesi dahil.'),
+    ],
+    hours: const [
+      OpeningHour('Hafta içi', '16:00 – 21:00'),
+      OpeningHour('Cumartesi', '10:00 – 18:00'),
+      OpeningHour('Pazar', 'Dolu'),
+      OpeningHour('Online', 'Esnek saat'),
+    ],
+    lessonModes: const [
+      OpeningHour('Öğrencinin evinde', '✓ Kadıköy çevresi'),
+      OpeningHour('Online (canlı)', '✓ Tüm Türkiye'),
+      OpeningHour('Grup dersi (2–3 kişi)', '✓ Talebe göre'),
+    ],
     reviews: [
       Review(
         id: 'r5',

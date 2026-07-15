@@ -1,11 +1,11 @@
 {
-    "name": "egitimciler_platformu",
-    "short_name": "egitimciler_platformu",
+    "name": "Pusula Eğitim",
+    "short_name": "Pusula",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#FDFDFC",
+    "theme_color": "#0F7A63",
+    "description": "Özel okul, kurs, dershane ve özel öğretmenleri karşılaştırarak bulun.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
