@@ -5,7 +5,9 @@ import '../models/models.dart';
 import '../state/app_state.dart';
 import '../theme/pusula_theme.dart';
 import '../widgets/common.dart';
+import 'browse_screen.dart';
 import 'login_screen.dart';
+import 'provider_detail_screen.dart';
 
 /// Public marketing page, implemented from the "Pusula Egitim v2"
 /// Claude Design file. All CTAs lead to the (demo) sign-in screen.
@@ -25,6 +27,7 @@ class _SearchTab {
 
 class _LandingScreenState extends State<LandingScreen> {
   int _activeTab = 0;
+  final _searchController = TextEditingController();
 
   static const _tabs = [
     _SearchTab('Özel Okul', 'Örn. bilim koleji, İngilizce ağırlıklı'),
@@ -33,9 +36,43 @@ class _LandingScreenState extends State<LandingScreen> {
     _SearchTab('Özel Öğretmen', 'Örn. birebir matematik, evde'),
   ];
 
+  static const _tabTypes = [
+    ProviderType.privateSchool,
+    ProviderType.course,
+    ProviderType.dershane,
+    ProviderType.privateTeacher,
+  ];
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   void _goToSignIn() {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const LoginScreen()),
+    );
+  }
+
+  /// Run the hero search: store query + selected type, then open the
+  /// results page — no sign-in required to browse and compare.
+  void _submitSearch() {
+    final app = context.read<AppState>();
+    app.setSearch(_searchController.text);
+    app.setFilters(type: _tabTypes[_activeTab]);
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const SearchResultsScreen()),
+    );
+  }
+
+  /// Category cards open the same results page filtered by type.
+  void _browseCategory(ProviderType type) {
+    final app = context.read<AppState>();
+    app.setSearch('');
+    app.setFilters(type: type);
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const SearchResultsScreen()),
     );
   }
 
@@ -259,11 +296,21 @@ class _LandingScreenState extends State<LandingScreen> {
       child: Row(
         children: [
           Expanded(
-            child: Text(
-              _tabs[_activeTab].hint,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 15, color: PusulaColors.faint),
+            child: TextField(
+              controller: _searchController,
+              onSubmitted: (_) => _submitSearch(),
+              style: const TextStyle(fontSize: 15, color: PusulaColors.ink),
+              decoration: InputDecoration(
+                hintText: _tabs[_activeTab].hint,
+                hintStyle:
+                    const TextStyle(fontSize: 15, color: PusulaColors.faint),
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                filled: false,
+                isDense: true,
+                contentPadding: EdgeInsets.zero,
+              ),
             ),
           ),
           if (!_narrow) ...[
@@ -280,7 +327,7 @@ class _LandingScreenState extends State<LandingScreen> {
             style: FilledButton.styleFrom(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 26, vertical: 12)),
-            onPressed: _goToSignIn,
+            onPressed: _submitSearch,
             child: const Text('Ara'),
           ),
         ],
@@ -305,15 +352,22 @@ class _LandingScreenState extends State<LandingScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _sectionHeader('Ne aradığınızı seçin', 'Tüm kategoriler →'),
+            _sectionHeader('Ne aradığınızı seçin', 'Tüm kategoriler →',
+                onTap: () {
+                  final app = context.read<AppState>();
+                  app.setSearch('');
+                  app.setFilters(clear: true);
+                  Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => const SearchResultsScreen()));
+                }),
             const SizedBox(height: 36),
             _grid(
               columns: columns,
               gap: 24,
               children: [
-                for (final (num, title, desc, count) in cats)
+                for (var i = 0; i < cats.length; i++)
                   InkWell(
-                    onTap: _goToSignIn,
+                    onTap: () => _browseCategory(_tabTypes[i]),
                     child: Container(
                       padding: const EdgeInsets.only(left: 24, top: 8, bottom: 8),
                       decoration: const BoxDecoration(
@@ -323,21 +377,21 @@ class _LandingScreenState extends State<LandingScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(num,
+                          Text(cats[i].$1,
                               style: const TextStyle(
                                   fontFamily: 'monospace',
                                   fontSize: 12,
                                   color: PusulaColors.faint)),
                           const SizedBox(height: 14),
-                          Text(title, style: pusulaHeading(fontSize: 18)),
+                          Text(cats[i].$2, style: pusulaHeading(fontSize: 18)),
                           const SizedBox(height: 6),
-                          Text(desc,
+                          Text(cats[i].$3,
                               style: const TextStyle(
                                   fontSize: 14,
                                   color: PusulaColors.muted,
                                   height: 1.55)),
                           const SizedBox(height: 12),
-                          Text('$count ilan',
+                          Text('${cats[i].$4} ilan',
                               style: const TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
@@ -366,8 +420,14 @@ class _LandingScreenState extends State<LandingScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _sectionHeader(
-                'Velilerin en çok incelediği ilanlar', 'Tümünü gör →'),
+            _sectionHeader('Velilerin en çok incelediği ilanlar', 'Tümünü gör →',
+                onTap: () {
+                  final app = context.read<AppState>();
+                  app.setSearch('');
+                  app.setFilters(clear: true);
+                  Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => const SearchResultsScreen()));
+                }),
             const SizedBox(height: 36),
             _grid(
               columns: columns,
@@ -384,7 +444,10 @@ class _LandingScreenState extends State<LandingScreen> {
 
   Widget _listingCard(ProviderProfile p) {
     return InkWell(
-      onTap: _goToSignIn,
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(
+            builder: (_) => ProviderDetailScreen(providerId: p.id)),
+      ),
       borderRadius: BorderRadius.circular(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1042,13 +1105,13 @@ class _LandingScreenState extends State<LandingScreen> {
 
   // ---------- Helpers ----------
 
-  Widget _sectionHeader(String title, String action) {
+  Widget _sectionHeader(String title, String action, {VoidCallback? onTap}) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         Expanded(child: Text(title, style: pusulaHeading(fontSize: 28))),
         InkWell(
-          onTap: _goToSignIn,
+          onTap: onTap ?? _goToSignIn,
           child: Text(action,
               style: const TextStyle(
                   fontSize: 14,

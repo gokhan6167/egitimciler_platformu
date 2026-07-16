@@ -15,18 +15,45 @@ void main() {
         findsOneWidget);
     expect(find.text('Kayıt ol'), findsOneWidget);
 
-    // "Giriş yap" opens the demo sign-in screen.
+    // "Giriş yap" opens the sign-in screen from the "Giris Yap" design.
     await tester.tap(find.text('Giriş yap'));
     await tester.pumpAndSettle();
-    expect(find.text('Ayşe Yılmaz'), findsOneWidget); // parent
+    expect(find.text('Tekrar hoş geldiniz'), findsOneWidget);
+    expect(find.textContaining('Ayşe Yılmaz'), findsWidgets); // parent tab
 
-    // Institutions sit further down the list; scroll them into view.
-    await tester.dragUntilVisible(
-      find.text('Bilge Koleji'),
-      find.byType(ListView),
-      const Offset(0, -200),
-    );
-    expect(find.text('Bilge Koleji'), findsWidgets);
+    // Kurum tab lists institution demo accounts.
+    await tester.tap(find.text('Kurum'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Bilge Koleji'), findsWidgets);
+
+    // Signing in with the default (first) institution account works.
+    final loginButton = find.widgetWithText(FilledButton, 'Giriş yap');
+    await tester.ensureVisible(loginButton);
+    await tester.tap(loginButton);
+    await tester.pumpAndSettle();
+    expect(find.text('Tekrar hoş geldiniz'), findsNothing);
+  });
+
+  testWidgets('hero search reaches results and detail without sign-in',
+      (tester) async {
+    await tester.pumpWidget(const EgitimcilerApp());
+    await tester.pump();
+
+    // Type a Turkish-cased query and search (default tab: Özel Okul).
+    await tester.enterText(find.byType(TextField).first, 'istanbul');
+    await tester.ensureVisible(find.text('Ara'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Ara'));
+    await tester.pumpAndSettle();
+
+    // Guest results page shows the matching school despite İ/i casing.
+    expect(find.text('Arama sonuçları'), findsOneWidget);
+    expect(find.textContaining('Bilge Koleji'), findsWidgets);
+
+    // Listing detail opens without an account and offers seeker actions.
+    await tester.tap(find.textContaining('Bilge Koleji').first);
+    await tester.pumpAndSettle();
+    expect(find.text('Teklif iste'), findsOneWidget);
   });
 
   group('role-based visibility', () {
@@ -61,6 +88,25 @@ void main() {
   });
 
   group('core flows', () {
+    test('search is Turkish case/accent insensitive', () {
+      final app = AppState();
+
+      app.setSearch('istanbul'); // matches "İstanbul"
+      expect(app.filteredProviders.map((p) => p.name),
+          contains('Bilge Koleji'));
+
+      app.setSearch('İNGİLİZCE'); // matches "İngilizce"
+      expect(app.filteredProviders.map((p) => p.name),
+          contains('Lingua Dil Kursu'));
+
+      app.setSearch('kodlama atolyesi'); // accent-folded multi-word
+      expect(app.filteredProviders.map((p) => p.name),
+          contains('Kodlama Atölyesi'));
+
+      app.setSearch('');
+      expect(app.filteredProviders.length, app.providers.length);
+    });
+
     test('filtering by type, city, price and rating works', () {
       final app = AppState();
 

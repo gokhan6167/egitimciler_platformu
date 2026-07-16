@@ -6,9 +6,18 @@ import '../models/models.dart';
 String _pic(int seed) => 'https://picsum.photos/seed/edu$seed/640/360';
 
 final List<AppUser> seedUsers = [
-  // Seekers
+  // Parents
   AppUser(id: 'u_veli', name: 'Ayşe Yılmaz', role: UserRole.parent, city: 'İstanbul'),
+  AppUser(id: 'u_veli2', name: 'Fatma Öztürk', role: UserRole.parent, city: 'İzmir'),
+  AppUser(id: 'u_veli3', name: 'Hasan Çelik', role: UserRole.parent, city: 'Bursa'),
+  AppUser(id: 'u_veli4', name: 'Elif Aydın', role: UserRole.parent, city: 'Antalya'),
+  AppUser(id: 'u_veli5', name: 'Murat Koç', role: UserRole.parent, city: 'Ankara'),
+  // Students
   AppUser(id: 'u_ogrenci', name: 'Mert Kaya', role: UserRole.student, city: 'Ankara'),
+  AppUser(id: 'u_ogrenci2', name: 'Zehra Polat', role: UserRole.student, city: 'İstanbul'),
+  AppUser(id: 'u_ogrenci3', name: 'Ali Duman', role: UserRole.student, city: 'İzmir'),
+  AppUser(id: 'u_ogrenci4', name: 'Ece Güneş', role: UserRole.student, city: 'Bursa'),
+  AppUser(id: 'u_ogrenci5', name: 'Burak Yıldız', role: UserRole.student, city: 'Antalya'),
   // Teachers
   AppUser(
     id: 'u_ogretmen1',
@@ -67,6 +76,105 @@ final List<AppUser> seedUsers = [
     city: 'İzmir',
     bio: 'İngilizce, Almanca ve İspanyolca kursları.',
     providerId: 'p_kurum3',
+  ),
+  // Schools
+  AppUser(
+    id: 'u_okul2',
+    name: 'Atlas Koleji',
+    role: UserRole.institution,
+    city: 'Ankara',
+    bio: 'Fen ve teknoloji ağırlıklı özel okul.',
+    providerId: 'p_okul2',
+  ),
+  AppUser(
+    id: 'u_okul3',
+    name: 'Deniz Koleji',
+    role: UserRole.institution,
+    city: 'İzmir',
+    bio: 'Denize sıfır kampüste çift dilli eğitim.',
+    providerId: 'p_okul3',
+  ),
+  AppUser(
+    id: 'u_okul4',
+    name: 'Yıldız Okulları',
+    role: UserRole.institution,
+    city: 'Bursa',
+    bio: 'Anaokulundan liseye butik eğitim.',
+    providerId: 'p_okul4',
+  ),
+  AppUser(
+    id: 'u_okul5',
+    name: 'Akdeniz Koleji',
+    role: UserRole.institution,
+    city: 'Antalya',
+    bio: 'Uluslararası bakalorya programlı özel okul.',
+    providerId: 'p_okul5',
+  ),
+  // Dershaneler
+  AppUser(
+    id: 'u_dershane2',
+    name: 'Başarı Dershanesi',
+    role: UserRole.institution,
+    city: 'İstanbul',
+    bio: 'LGS ve YKS odaklı, küçük sınıflar.',
+    providerId: 'p_dershane2',
+  ),
+  AppUser(
+    id: 'u_dershane3',
+    name: 'Hedef Dershanesi',
+    role: UserRole.institution,
+    city: 'İzmir',
+    bio: 'Deneme sınavı ve koçluk ağırlıklı hazırlık.',
+    providerId: 'p_dershane3',
+  ),
+  AppUser(
+    id: 'u_dershane4',
+    name: 'Anadolu Dershanesi',
+    role: UserRole.institution,
+    city: 'Bursa',
+    bio: '25 yıldır üniversite hazırlıkta uzman kadro.',
+    providerId: 'p_dershane4',
+  ),
+  AppUser(
+    id: 'u_dershane5',
+    name: 'Doruk Dershanesi',
+    role: UserRole.institution,
+    city: 'Antalya',
+    bio: 'Birebir etüt destekli LGS/YKS programları.',
+    providerId: 'p_dershane5',
+  ),
+  // Courses
+  AppUser(
+    id: 'u_kurs2',
+    name: 'Kodlama Atölyesi',
+    role: UserRole.institution,
+    city: 'İstanbul',
+    bio: 'Çocuk ve gençler için kodlama ve robotik.',
+    providerId: 'p_kurs2',
+  ),
+  AppUser(
+    id: 'u_kurs3',
+    name: 'Sanat Akademisi',
+    role: UserRole.institution,
+    city: 'Ankara',
+    bio: 'Resim, seramik ve tasarım atölyeleri.',
+    providerId: 'p_kurs3',
+  ),
+  AppUser(
+    id: 'u_kurs4',
+    name: 'Robotik Kulübü',
+    role: UserRole.institution,
+    city: 'Bursa',
+    bio: 'STEM ve robotik yarışma takımları.',
+    providerId: 'p_kurs4',
+  ),
+  AppUser(
+    id: 'u_kurs5',
+    name: 'Nota Müzik Kursu',
+    role: UserRole.institution,
+    city: 'Antalya',
+    bio: 'Enstrüman ve şan eğitimi, sahne deneyimi.',
+    providerId: 'p_kurs5',
   ),
 ];
 
@@ -273,6 +381,270 @@ final List<ProviderProfile> seedProviders = [
     monthlyPrice: 5000,
     photoUrls: [_pic(51)],
     features: ['Konuşma Odaklı', 'Online Ders', 'Sertifikalı'],
+    reviews: [],
+  ),
+  // ---- Schools ----
+  ProviderProfile(
+    id: 'p_okul2',
+    ownerUserId: 'u_okul2',
+    name: 'Atlas Koleji',
+    type: ProviderType.privateSchool,
+    city: 'Ankara',
+    description:
+        'Fen ve teknoloji ağırlıklı müfredat, robotik laboratuvarları ve '
+        'TÜBİTAK proje koçluğu. 16 kişilik sınıflar.',
+    monthlyPrice: 22000,
+    photoUrls: [_pic(71), _pic(72), _pic(73)],
+    features: ['Servis', 'Yemek', 'Robotik Lab', 'Proje Koçluğu'],
+    highlight: 'Burs sınavı: 15 Ağustos',
+    reviews: [
+      Review(
+        id: 'r7',
+        authorId: 'u_veli5',
+        authorName: 'Murat Koç',
+        stars: 5,
+        comment: 'Fen laboratuvarları ve öğretmen kadrosu çok güçlü.',
+        date: DateTime(2026, 5, 3),
+      ),
+    ],
+  ),
+  ProviderProfile(
+    id: 'p_okul3',
+    ownerUserId: 'u_okul3',
+    name: 'Deniz Koleji',
+    type: ProviderType.privateSchool,
+    city: 'İzmir',
+    description:
+        'Denize sıfır kampüste çift dilli eğitim. Yelken, yüzme ve su sporları '
+        'kulüpleri; Cambridge sınav merkezi.',
+    monthlyPrice: 24000,
+    photoUrls: [_pic(74), _pic(75)],
+    features: ['Çift Dilli', 'Yüzme', 'Yelken', 'Cambridge Merkezi'],
+    reviews: [
+      Review(
+        id: 'r8',
+        authorId: 'u_veli2',
+        authorName: 'Fatma Öztürk',
+        stars: 4,
+        comment: 'Kampüs harika, İngilizce eğitimi çok iyi.',
+        date: DateTime(2026, 4, 18),
+      ),
+    ],
+  ),
+  ProviderProfile(
+    id: 'p_okul4',
+    ownerUserId: 'u_okul4',
+    name: 'Yıldız Okulları',
+    type: ProviderType.privateSchool,
+    city: 'Bursa',
+    description:
+        'Anaokulundan liseye butik eğitim; sınıf başına en fazla 14 öğrenci, '
+        'her öğrenciye bireysel gelişim planı.',
+    monthlyPrice: 18000,
+    photoUrls: [_pic(76), _pic(77)],
+    features: ['Butik Sınıf', 'Bireysel Plan', 'Servis', 'Rehberlik'],
+    reviews: [
+      Review(
+        id: 'r9',
+        authorId: 'u_veli3',
+        authorName: 'Hasan Çelik',
+        stars: 5,
+        comment: 'Küçük sınıflar sayesinde oğlumla birebir ilgileniyorlar.',
+        date: DateTime(2026, 6, 21),
+      ),
+    ],
+  ),
+  ProviderProfile(
+    id: 'p_okul5',
+    ownerUserId: 'u_okul5',
+    name: 'Akdeniz Koleji',
+    type: ProviderType.privateSchool,
+    city: 'Antalya',
+    description:
+        'Uluslararası bakalorya (IB) programı, yabancı öğretmen kadrosu ve '
+        'yurt dışı üniversite danışmanlığı.',
+    monthlyPrice: 28000,
+    photoUrls: [_pic(78), _pic(79)],
+    features: ['IB Programı', 'Yabancı Öğretmen', 'Yurt Dışı Danışmanlık'],
+    reviews: [
+      Review(
+        id: 'r10',
+        authorId: 'u_veli4',
+        authorName: 'Elif Aydın',
+        stars: 4,
+        comment: 'IB programı için Antalya’daki en iyi seçenek.',
+        date: DateTime(2026, 3, 30),
+      ),
+    ],
+  ),
+  // ---- Dershaneler ----
+  ProviderProfile(
+    id: 'p_dershane2',
+    ownerUserId: 'u_dershane2',
+    name: 'Başarı Dershanesi',
+    type: ProviderType.dershane,
+    city: 'İstanbul',
+    description:
+        'LGS ve YKS odaklı, 12 kişilik sınıflar. Haftalık birebir etüt ve '
+        'veli bilgilendirme sistemi.',
+    monthlyPrice: 9000,
+    photoUrls: [_pic(81), _pic(82)],
+    features: ['Küçük Sınıf', 'Birebir Etüt', 'Veli Takip', 'Deneme Sınavı'],
+    highlight: 'Erken kayıtta %15 indirim',
+    reviews: [
+      Review(
+        id: 'r11',
+        authorId: 'u_ogrenci2',
+        authorName: 'Zehra Polat',
+        stars: 5,
+        comment: 'Etüt sistemi sayesinde matematik netlerim ikiye katlandı.',
+        date: DateTime(2026, 5, 25),
+      ),
+    ],
+  ),
+  ProviderProfile(
+    id: 'p_dershane3',
+    ownerUserId: 'u_dershane3',
+    name: 'Hedef Dershanesi',
+    type: ProviderType.dershane,
+    city: 'İzmir',
+    description:
+        'Deneme sınavı ve koçluk ağırlıklı YKS hazırlık. Her öğrenciye haftalık '
+        'birebir koçluk görüşmesi.',
+    monthlyPrice: 7500,
+    photoUrls: [_pic(83), _pic(84)],
+    features: ['Koçluk', 'Deneme Sınavı', 'Online Takip'],
+    reviews: [
+      Review(
+        id: 'r12',
+        authorId: 'u_ogrenci3',
+        authorName: 'Ali Duman',
+        stars: 4,
+        comment: 'Koçluk görüşmeleri motivasyonumu yüksek tutuyor.',
+        date: DateTime(2026, 4, 9),
+      ),
+    ],
+  ),
+  ProviderProfile(
+    id: 'p_dershane4',
+    ownerUserId: 'u_dershane4',
+    name: 'Anadolu Dershanesi',
+    type: ProviderType.dershane,
+    city: 'Bursa',
+    description:
+        '25 yıldır üniversite hazırlıkta uzman kadro. TYT-AYT tam program ve '
+        'hafta sonu yoğunlaştırılmış kamplar.',
+    monthlyPrice: 6500,
+    photoUrls: [_pic(85)],
+    features: ['Tecrübeli Kadro', 'Hafta Sonu Kampı', 'Rehberlik'],
+    reviews: [
+      Review(
+        id: 'r13',
+        authorId: 'u_ogrenci4',
+        authorName: 'Ece Güneş',
+        stars: 4,
+        comment: 'Hafta sonu kampları sınav öncesi çok işe yaradı.',
+        date: DateTime(2026, 6, 5),
+      ),
+    ],
+  ),
+  ProviderProfile(
+    id: 'p_dershane5',
+    ownerUserId: 'u_dershane5',
+    name: 'Doruk Dershanesi',
+    type: ProviderType.dershane,
+    city: 'Antalya',
+    description:
+        'Birebir etüt destekli LGS/YKS programları. Akıllı tahta, soru bankası '
+        'uygulaması ve 7/24 soru çözüm hattı.',
+    monthlyPrice: 7000,
+    photoUrls: [_pic(86)],
+    features: ['Birebir Etüt', 'Soru Çözüm Hattı', 'Mobil Uygulama'],
+    reviews: [],
+  ),
+  // ---- Courses ----
+  ProviderProfile(
+    id: 'p_kurs2',
+    ownerUserId: 'u_kurs2',
+    name: 'Kodlama Atölyesi',
+    type: ProviderType.course,
+    city: 'İstanbul',
+    description:
+        '7-17 yaş için kodlama ve robotik. Scratch, Python ve Arduino '
+        'müfredatı; yıl sonu proje sergisi.',
+    monthlyPrice: 3500,
+    photoUrls: [_pic(91), _pic(92)],
+    features: ['Scratch', 'Python', 'Arduino', 'Proje Sergisi'],
+    highlight: 'İlk hafta ücretsiz deneme',
+    reviews: [
+      Review(
+        id: 'r14',
+        authorId: 'u_veli5',
+        authorName: 'Murat Koç',
+        stars: 5,
+        comment: 'Oğlum kendi oyununu yaptı, kursu iple çekiyor.',
+        date: DateTime(2026, 5, 14),
+      ),
+    ],
+  ),
+  ProviderProfile(
+    id: 'p_kurs3',
+    ownerUserId: 'u_kurs3',
+    name: 'Sanat Akademisi',
+    type: ProviderType.course,
+    city: 'Ankara',
+    description:
+        'Resim, seramik ve tasarım atölyeleri. Güzel sanatlar liselerine ve '
+        'fakültelerine hazırlık programları.',
+    monthlyPrice: 3000,
+    photoUrls: [_pic(93)],
+    features: ['Resim', 'Seramik', 'GSL Hazırlık', 'Portfolyo'],
+    reviews: [
+      Review(
+        id: 'r15',
+        authorId: 'u_ogrenci5',
+        authorName: 'Burak Yıldız',
+        stars: 5,
+        comment: 'Portfolyo hazırlığında çok destek oldular.',
+        date: DateTime(2026, 2, 27),
+      ),
+    ],
+  ),
+  ProviderProfile(
+    id: 'p_kurs4',
+    ownerUserId: 'u_kurs4',
+    name: 'Robotik Kulübü',
+    type: ProviderType.course,
+    city: 'Bursa',
+    description:
+        'STEM ve robotik yarışma takımları. FIRST LEGO League ve TEKNOFEST '
+        'hazırlık grupları.',
+    monthlyPrice: 4000,
+    photoUrls: [_pic(94)],
+    features: ['LEGO League', 'TEKNOFEST', 'Takım Çalışması'],
+    reviews: [
+      Review(
+        id: 'r16',
+        authorId: 'u_ogrenci4',
+        authorName: 'Ece Güneş',
+        stars: 4,
+        comment: 'Takımımızla TEKNOFEST finaline kaldık!',
+        date: DateTime(2026, 6, 30),
+      ),
+    ],
+  ),
+  ProviderProfile(
+    id: 'p_kurs5',
+    ownerUserId: 'u_kurs5',
+    name: 'Nota Müzik Kursu',
+    type: ProviderType.course,
+    city: 'Antalya',
+    description:
+        'Piyano, gitar, keman ve şan eğitimi. Yıl sonu konserleri ve sahne '
+        'deneyimi; konservatuvar hazırlık.',
+    monthlyPrice: 2800,
+    photoUrls: [_pic(95)],
+    features: ['Piyano', 'Gitar', 'Şan', 'Konservatuvar Hazırlık'],
     reviews: [],
   ),
   ProviderProfile(

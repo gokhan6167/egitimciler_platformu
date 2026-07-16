@@ -5,6 +5,7 @@ import '../models/models.dart';
 import '../state/app_state.dart';
 import '../theme/pusula_theme.dart';
 import '../widgets/common.dart';
+import 'login_screen.dart';
 import 'messages_screen.dart';
 
 /// Public listing page, implemented from the "Ilan Detay" Claude Design file:
@@ -14,6 +15,18 @@ class ProviderDetailScreen extends StatelessWidget {
   const ProviderDetailScreen({super.key, required this.providerId});
 
   final String providerId;
+
+  /// Guests can browse; actions that need an account route to sign-in.
+  bool _requireLogin(BuildContext context) {
+    if (context.read<AppState>().currentUser != null) return true;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Bu işlem için önce giriş yapın.')),
+    );
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+    );
+    return false;
+  }
 
   // ---------- Dialogs ----------
 
@@ -138,8 +151,8 @@ class ProviderDetailScreen extends StatelessWidget {
     if (provider == null) {
       return const Scaffold(body: Center(child: Text('İlan bulunamadı')));
     }
-    final user = app.currentUser!;
-    final isOwner = user.id == provider.ownerUserId;
+    final user = app.currentUser; // null → guest browsing from search
+    final isOwner = user != null && user.id == provider.ownerUserId;
     final owner = app.userById(provider.ownerUserId);
     final wide = MediaQuery.of(context).size.width >= 980;
     final isTeacher = provider.type == ProviderType.privateTeacher;
@@ -337,7 +350,7 @@ class ProviderDetailScreen extends StatelessWidget {
 
   // ---------- Main column ----------
 
-  Widget _mainColumn(BuildContext context, ProviderProfile p, AppUser user,
+  Widget _mainColumn(BuildContext context, ProviderProfile p, AppUser? user,
       bool isOwner, AppUser? owner, bool isTeacher) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -849,7 +862,7 @@ class ProviderDetailScreen extends StatelessWidget {
   }
 
   Widget _reviews(
-      BuildContext context, ProviderProfile p, AppUser user, bool isOwner) {
+      BuildContext context, ProviderProfile p, AppUser? user, bool isOwner) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -875,7 +888,7 @@ class ProviderDetailScreen extends StatelessWidget {
             ),
           ],
         ),
-        if (!isOwner && user.role.isSeeker)
+        if (!isOwner && (user == null || user.role.isSeeker))
           Padding(
             padding: const EdgeInsets.only(top: 12),
             child: OutlinedButton.icon(
@@ -884,7 +897,9 @@ class ProviderDetailScreen extends StatelessWidget {
               style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(
                       horizontal: 18, vertical: 10)),
-              onPressed: () => _showReviewDialog(context),
+              onPressed: () {
+                if (_requireLogin(context)) _showReviewDialog(context);
+              },
             ),
           ),
         const SizedBox(height: 8),
@@ -946,9 +961,11 @@ class ProviderDetailScreen extends StatelessWidget {
   // ---------- Sidebar ----------
 
   Widget _sidebar(BuildContext context, AppState app, ProviderProfile p,
-      AppUser user, bool isOwner, AppUser? owner) {
+      AppUser? user, bool isOwner, AppUser? owner) {
     final inCompare = app.isInCompare(p.id);
     final isTeacher = p.type == ProviderType.privateTeacher;
+    // Guests get the seeker actions; auth is asked on tap where needed.
+    final seekerish = user == null || user.role.isSeeker;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -992,19 +1009,23 @@ class ProviderDetailScreen extends StatelessWidget {
               ],
               const SizedBox(height: 20),
               if (!isOwner && owner != null) ...[
-                if (user.role.isSeeker) ...[
+                if (seekerish) ...[
                   FilledButton(
-                    onPressed: () => _showOfferDialog(context),
+                    onPressed: () {
+                      if (_requireLogin(context)) _showOfferDialog(context);
+                    },
                     child: Text(
                         isTeacher ? 'Ders talebi gönder' : 'Teklif iste'),
                   ),
                   const SizedBox(height: 10),
                 ],
                 OutlinedButton(
-                  onPressed: () => _messageOwner(context, owner),
+                  onPressed: () {
+                    if (_requireLogin(context)) _messageOwner(context, owner);
+                  },
                   child: const Text('Mesaj gönder'),
                 ),
-                if (user.role.isSeeker) ...[
+                if (seekerish) ...[
                   const SizedBox(height: 4),
                   TextButton(
                     onPressed: () {

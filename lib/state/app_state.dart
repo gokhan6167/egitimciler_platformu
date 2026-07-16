@@ -70,16 +70,40 @@ class AppState extends ChangeNotifier {
   List<String> get cities =>
       providers.map((p) => p.city).toSet().toList()..sort();
 
+  /// Case/accent-insensitive fold for Turkish text. Dart's toLowerCase()
+  /// maps 'İ' to 'i' + combining dot (U+0307), so "İstanbul" would never
+  /// contain "istanbul"; fold both sides to plain ASCII instead.
+  static String _fold(String s) {
+    const map = {
+      'İ': 'i', 'I': 'i', 'ı': 'i',
+      'Ç': 'c', 'ç': 'c',
+      'Ğ': 'g', 'ğ': 'g',
+      'Ö': 'o', 'ö': 'o',
+      'Ş': 's', 'ş': 's',
+      'Ü': 'u', 'ü': 'u',
+      '̇': '', // combining dot above, in case it sneaks in
+    };
+    final sb = StringBuffer();
+    for (final ch in s.split('')) {
+      sb.write(map[ch] ?? ch.toLowerCase());
+    }
+    return sb.toString();
+  }
+
   List<ProviderProfile> get filteredProviders {
     return providers.where((p) {
       if (filterType != null && p.type != filterType) return false;
       if (filterCity != null && p.city != filterCity) return false;
       if (filterMaxPrice != null && p.monthlyPrice > filterMaxPrice!) return false;
       if (p.avgRating < filterMinRating) return false;
-      if (searchQuery.isNotEmpty) {
-        final q = searchQuery.toLowerCase();
-        final hay = '${p.name} ${p.description} ${p.city} ${p.features.join(' ')}'.toLowerCase();
-        if (!hay.contains(q)) return false;
+      if (searchQuery.trim().isNotEmpty) {
+        final q = _fold(searchQuery.trim());
+        final hay = _fold(
+            '${p.name} ${p.description} ${p.city} ${p.features.join(' ')} ${p.type.labelTr}');
+        // Every word of the query must match somewhere.
+        for (final word in q.split(RegExp(r'\s+'))) {
+          if (!hay.contains(word)) return false;
+        }
       }
       return true;
     }).toList()

@@ -3,13 +3,74 @@ import 'package:provider/provider.dart';
 
 import '../models/models.dart';
 import '../state/app_state.dart';
+import '../theme/pusula_theme.dart';
 import '../widgets/common.dart';
 import 'compare_screen.dart';
+import 'login_screen.dart';
 import 'provider_detail_screen.dart';
 
+/// Standalone results page for guests coming from the landing hero search.
+/// Wraps [BrowseScreen] in its own scaffold; signing in is offered but not
+/// required to browse, open listings or compare them.
+class SearchResultsScreen extends StatelessWidget {
+  const SearchResultsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final signedIn = context.watch<AppState>().currentUser != null;
+    return Scaffold(
+      appBar: AppBar(
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const PusulaLogo(size: 22),
+            const SizedBox(width: 8),
+            Text('Arama sonuçları', style: pusulaHeading(fontSize: 16)),
+          ],
+        ),
+        centerTitle: false,
+        actions: [
+          if (!signedIn)
+            Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: TextButton(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                ),
+                child: const Text('Giriş yap'),
+              ),
+            ),
+        ],
+      ),
+      body: const BrowseScreen(),
+    );
+  }
+}
+
 /// Search + filter + list of all listings. Seekers can also add to compare.
-class BrowseScreen extends StatelessWidget {
+class BrowseScreen extends StatefulWidget {
   const BrowseScreen({super.key});
+
+  @override
+  State<BrowseScreen> createState() => _BrowseScreenState();
+}
+
+class _BrowseScreenState extends State<BrowseScreen> {
+  // Seeded with the query typed on the landing hero, if any.
+  late final TextEditingController _searchController;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController =
+        TextEditingController(text: context.read<AppState>().searchQuery);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   Future<void> _openFilters(BuildContext context) async {
     final app = context.read<AppState>();
@@ -125,7 +186,8 @@ class BrowseScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final app = context.watch<AppState>();
-    final user = app.currentUser!;
+    final user = app.currentUser; // null → guest arriving from landing search
+    final canCompare = user == null || user.role.isSeeker;
     final list = app.filteredProviders;
     final hasFilter = app.filterType != null ||
         app.filterCity != null ||
@@ -140,11 +202,22 @@ class BrowseScreen extends StatelessWidget {
             children: [
               Expanded(
                 child: TextField(
-                  decoration: const InputDecoration(
-                    prefixIcon: Icon(Icons.search),
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.search),
                     hintText: 'Okul, kurs, öğretmen ara...',
-                    border: OutlineInputBorder(),
+                    border: const OutlineInputBorder(),
                     isDense: true,
+                    suffixIcon: app.searchQuery.isEmpty
+                        ? null
+                        : IconButton(
+                            tooltip: 'Temizle',
+                            icon: const Icon(Icons.close),
+                            onPressed: () {
+                              _searchController.clear();
+                              app.setSearch('');
+                            },
+                          ),
                   ),
                   onChanged: app.setSearch,
                 ),
@@ -161,7 +234,7 @@ class BrowseScreen extends StatelessWidget {
             ],
           ),
         ),
-        if (user.role.isSeeker && app.compareIds.isNotEmpty)
+        if (canCompare && app.compareIds.isNotEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: Row(
@@ -187,7 +260,7 @@ class BrowseScreen extends StatelessWidget {
                   padding: const EdgeInsets.all(12),
                   itemCount: list.length,
                   itemBuilder: (context, i) =>
-                      _ProviderCard(provider: list[i], showCompare: user.role.isSeeker),
+                      _ProviderCard(provider: list[i], showCompare: canCompare),
                 ),
         ),
       ],
