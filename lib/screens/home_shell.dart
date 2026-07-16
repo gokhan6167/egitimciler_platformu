@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../models/models.dart';
 import '../state/app_state.dart';
+import '../widgets/home_button.dart';
 import 'browse_screen.dart';
 import 'compare_screen.dart';
 import 'jobs_screen.dart';
@@ -70,6 +71,7 @@ class _HomeShellState extends State<HomeShell> {
       appBar: AppBar(
         title: Text(items[_index].label),
         actions: [
+          const HomeButton(),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8),
             child: Center(

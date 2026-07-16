@@ -65,3 +65,17 @@
   Nasıl çalışır → bölüme kaydırma; Öğretmen kariyeri → giriş (kapalı ağ).
 - [x] CTA "Aramaya başla" ve footer Keşfet linkleri girişsiz kategori
   sonuçlarına gider.
+
+## 2026-07-16 — Ana sayfa butonu + canlı ziyaretçi testi
+- [x] HomeButton widget'ı (lib/widgets/home_button.dart): tüm AppBar'lara
+  eklendi (sonuçlar, detay, karşılaştır, sohbet, HomeShell); giriş
+  ekranına "Ana sayfa" butonu; landing navbar oturum açıkken "Panele dön"
+  gösterir.
+- [x] Canlı site puppeteer-core + headless Chrome ile ziyaretçi olarak
+  test edildi: arama → sonuçlar → karşılaştırmaya ekleme → ilan detayı →
+  ana sayfa butonu; hepsi girişsiz çalışıyor (ekran görüntüleriyle
+  doğrulandı).
+- Not: kullanıcı "arama çalışmıyor" dediğinde neden büyük olasılıkla
+  Flutter service worker'ın eski sürümü önbelleğe almasıydı → sert
+  yenileme (Ctrl+F5) gerekir. Hero aramada seçili sekme tür filtresi
+  uygular; yanlış sekmede arama 0 sonuç verebilir (olası UX karışıklığı).

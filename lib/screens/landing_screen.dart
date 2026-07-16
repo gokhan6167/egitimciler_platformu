@@ -7,6 +7,7 @@ import '../theme/pusula_theme.dart';
 import '../widgets/common.dart';
 import 'browse_screen.dart';
 import 'compare_screen.dart';
+import 'home_shell.dart';
 import 'login_screen.dart';
 import 'provider_detail_screen.dart';
 
@@ -185,19 +186,31 @@ class _LandingScreenState extends State<LandingScreen> {
                     ),
                   const SizedBox(width: 12),
                 ],
-                TextButton(
-                  onPressed: _goToSignIn,
-                  child: const Text('Giriş yap',
-                      style: TextStyle(color: PusulaColors.ink)),
-                ),
-                const SizedBox(width: 6),
-                FilledButton(
-                  style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 18, vertical: 10)),
-                  onPressed: _goToSignIn,
-                  child: const Text('Kayıt ol'),
-                ),
+                if (context.watch<AppState>().currentUser != null)
+                  FilledButton(
+                    style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 18, vertical: 10)),
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const HomeShell()),
+                    ),
+                    child: const Text('Panele dön'),
+                  )
+                else ...[
+                  TextButton(
+                    onPressed: _goToSignIn,
+                    child: const Text('Giriş yap',
+                        style: TextStyle(color: PusulaColors.ink)),
+                  ),
+                  const SizedBox(width: 6),
+                  FilledButton(
+                    style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 18, vertical: 10)),
+                    onPressed: _goToSignIn,
+                    child: const Text('Kayıt ol'),
+                  ),
+                ],
               ],
             ),
           ),

@@ -5,6 +5,7 @@ import '../models/models.dart';
 import '../state/app_state.dart';
 import '../theme/pusula_theme.dart';
 import '../widgets/common.dart';
+import '../widgets/home_button.dart';
 import 'compare_screen.dart';
 import 'login_screen.dart';
 import 'provider_detail_screen.dart';
@@ -30,6 +31,7 @@ class SearchResultsScreen extends StatelessWidget {
         ),
         centerTitle: false,
         actions: [
+          const HomeButton(),
           if (!signedIn)
             Padding(
               padding: const EdgeInsets.only(right: 12),

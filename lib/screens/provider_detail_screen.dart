@@ -5,6 +5,7 @@ import '../models/models.dart';
 import '../state/app_state.dart';
 import '../theme/pusula_theme.dart';
 import '../widgets/common.dart';
+import '../widgets/home_button.dart';
 import 'login_screen.dart';
 import 'messages_screen.dart';
 
@@ -172,6 +173,7 @@ class ProviderDetailScreen extends StatelessWidget {
           ],
         ),
         centerTitle: false,
+        actions: const [HomeButton(), SizedBox(width: 8)],
       ),
       body: SingleChildScrollView(
         child: Center(

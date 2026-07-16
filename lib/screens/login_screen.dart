@@ -5,6 +5,7 @@ import '../models/models.dart';
 import '../state/app_state.dart';
 import '../theme/pusula_theme.dart';
 import 'home_shell.dart';
+import 'landing_screen.dart';
 
 /// Sign-in screen from the "Giris Yap" Claude Design file: split layout with
 /// the form on the left and a testimonial side panel on the right.
@@ -84,6 +85,13 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  void _goHome() {
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const LandingScreen()),
+      (_) => false,
+    );
+  }
+
   void _comingSoon(String what) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('$what demo sürümünde henüz aktif değil.')),
@@ -113,18 +121,28 @@ class _LoginScreenState extends State<LoginScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          InkWell(
-            onTap: () => Navigator.of(context).maybePop(),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const PusulaLogo(),
-                const SizedBox(width: 9),
-                Text('Pusula Eğitim',
-                    style:
-                        pusulaHeading(fontSize: 17, letterSpacingFactor: -0.01)),
-              ],
-            ),
+          Row(
+            children: [
+              InkWell(
+                onTap: _goHome,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const PusulaLogo(),
+                    const SizedBox(width: 9),
+                    Text('Pusula Eğitim',
+                        style: pusulaHeading(
+                            fontSize: 17, letterSpacingFactor: -0.01)),
+                  ],
+                ),
+              ),
+              const Spacer(),
+              TextButton.icon(
+                onPressed: _goHome,
+                icon: const Icon(Icons.home_outlined, size: 18),
+                label: const Text('Ana sayfa'),
+              ),
+            ],
           ),
           const SizedBox(height: 56),
           Center(

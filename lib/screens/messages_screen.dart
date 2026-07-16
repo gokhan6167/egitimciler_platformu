@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../state/app_state.dart';
+import '../widgets/home_button.dart';
 import '../widgets/common.dart';
 
 /// Conversation list for the signed-in user.
@@ -94,7 +95,10 @@ class _ChatScreenState extends State<ChatScreen> {
     final other = app.userById(conv.otherUserId(me.id));
 
     return Scaffold(
-      appBar: AppBar(title: Text(other?.name ?? 'Sohbet')),
+      appBar: AppBar(
+        title: Text(other?.name ?? 'Sohbet'),
+        actions: const [HomeButton(), SizedBox(width: 8)],
+      ),
       body: Column(
         children: [
           Expanded(

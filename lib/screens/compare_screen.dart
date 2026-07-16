@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../state/app_state.dart';
 import '../widgets/common.dart';
+import '../widgets/home_button.dart';
 
 /// Side-by-side comparison table of up to 3 selected listings.
 class CompareScreen extends StatelessWidget {
@@ -104,7 +105,10 @@ class CompareScreen extends StatelessWidget {
     final isPushed = ModalRoute.of(context)?.canPop ?? false;
     if (isPushed) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Karşılaştır')),
+        appBar: AppBar(
+          title: const Text('Karşılaştır'),
+          actions: const [HomeButton(), SizedBox(width: 8)],
+        ),
         body: body,
       );
     }
