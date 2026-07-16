@@ -29,3 +29,12 @@
   öğretmen (avatar + belgeler + paketler + uygunluk), dershane (programlar + etüt saatleri).
 - [x] Modeller: ProgramItem, OpeningHour, CredentialItem, highlight alanları.
 - [x] 9/9 test, analyze temiz, web build + Pages deploy tazelendi.
+
+## 2026-07-16 — Vercel deploy
+- [x] Vercel canlı: https://pusula-egitim.vercel.app (proje: gokhans-projects-fcf81002/pusula-egitim)
+- Deploy yöntemi: `flutter build web --release --base-href /` (Vercel için base `/`,
+  GitHub Pages için `/egitimciler_platformu/` — ikisi ayrı build ister).
+- Yeniden deploy: build sonrası `build/web` içinde `vercel deploy --prod --yes`.
+  `build/web/.vercel` klasörü proje bağlantısını tutar; silinirse
+  `vercel link --yes --project pusula-egitim` ile yeniden bağla.
+- Vercel hesabı: gokhan61673-6714 (CLI ile giriş yapıldı).
