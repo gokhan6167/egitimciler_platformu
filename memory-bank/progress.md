@@ -101,3 +101,27 @@
 - [x] Landing hero araması v2 tasarımına birebir uyduruldu: kategori
   sekmeleri arama hapının içinde (solda, ayraçlı), "İl / ilçe" bölümü
   kaldırıldı; dar ekranda sekmeler barın üstünde kalır. Canlıda doğrulandı.
+
+## 2026-07-16 — Türe özel filtreler + Admin Paneli
+- [x] Yapılandırılabilir filtre sistemi: FilterSection (checkbox/radio/pills,
+  active bayrağı), SearchPageConfig; tür başına bölümler 4 arama tasarımından
+  (okul: Kademe+Olanaklar; kurs: Alan+Yaş+Gün; dershane: Program+Olanaklar;
+  öğretmen: Branş+Seviye+Ders şekli+Deneyim). Eşleşme: TR-katlanmış kelime
+  araması (ad/açıklama/özellikler/programlar/sahip bio); 'experience' özel
+  bölümü sahibin yılına bakar. AppState.facetSelections; bölümler arası AND,
+  bölüm içi OR. Sıralama 4 ölçüt: Önerilen/Puan/Ücret ↑/Ücret ↓.
+- [x] Moderasyon modeli: ListingStatus (pending/published/suspended/rejected;
+  yalnız published aranır), ReviewStatus (yalnız published puana sayılır),
+  JobPosting.active, AppUser.suspended. Yeni eğitimci kaydı pending ilan açar.
+- [x] Admin Paneli "Admin Panel.dc.html"den (admin_panel_screen.dart): koyu
+  kenar çubuğu + 6 görünüm — Genel bakış (canlı istatistik, onay kuyruğu
+  Onayla/Reddet, etkinlik akışı), Filtre yönetimi (tür sekmeleri, grup
+  kartları: aktif/pasif anahtar, seçenek çipi silme, seçenek ekleme, grup
+  silme, yeni grup diyaloğu), İlanlar/Kullanıcılar/İş ilanları tabloları
+  (askıya al/yayınla), Yorum moderasyonu (Yayınla/Kaldır).
+- [x] Admin girişi: UserRole.admin, 'Site Yöneticisi' demo hesabı (giriş
+  ekranında Kurum sekmesinin ilk kaydı); HomeShell admin'i panele yönlendirir.
+- [x] 14/14 test (facet + admin moderasyon/CRUD testleri eklendi). Canlıda
+  puppeteer ile TEK TEK doğrulandı: 4 tür sayfası ve filtreleri, Lise facet
+  tıklaması (2 sonuç + çip), admin girişi, 6 panel görünümü, Onayla akışı
+  (rozet 2→1), Montessori seçeneği ekleme. Ekran görüntüleriyle kayıtlı.

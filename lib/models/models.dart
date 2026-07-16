@@ -2,7 +2,7 @@
 /// Pure Dart — no Flutter imports, so they can move to a backend later.
 library;
 
-enum UserRole { parent, student, teacher, institution }
+enum UserRole { parent, student, teacher, institution, admin }
 
 extension UserRoleX on UserRole {
   String get labelTr => switch (this) {
@@ -10,6 +10,7 @@ extension UserRoleX on UserRole {
         UserRole.student => 'Öğrenci',
         UserRole.teacher => 'Özel Öğretmen',
         UserRole.institution => 'Kurum',
+        UserRole.admin => 'Yönetici',
       };
 
   bool get isSeeker => this == UserRole.parent || this == UserRole.student;
@@ -17,6 +18,72 @@ extension UserRoleX on UserRole {
 }
 
 enum ProviderType { privateSchool, course, dershane, privateTeacher }
+
+/// Moderation state of a listing. Only published listings are searchable.
+enum ListingStatus { pending, published, suspended, rejected }
+
+extension ListingStatusX on ListingStatus {
+  String get labelTr => switch (this) {
+        ListingStatus.pending => 'Bekliyor',
+        ListingStatus.published => 'Yayında',
+        ListingStatus.suspended => 'Askıda',
+        ListingStatus.rejected => 'Reddedildi',
+      };
+}
+
+/// Moderation state of a review. Only published ones count toward ratings.
+enum ReviewStatus { pending, published, reported, removed }
+
+extension ReviewStatusX on ReviewStatus {
+  String get labelTr => switch (this) {
+        ReviewStatus.pending => 'Bekliyor',
+        ReviewStatus.published => 'Yayında',
+        ReviewStatus.reported => 'Bildirildi',
+        ReviewStatus.removed => 'Kaldırıldı',
+      };
+}
+
+/// How a configurable filter section renders and behaves.
+/// checkbox → multi select, radio → single select, pills → multi-select pills.
+enum FilterKind { checkbox, radio, pills }
+
+extension FilterKindX on FilterKind {
+  String get labelTr => switch (this) {
+        FilterKind.checkbox => 'Çoklu seçim',
+        FilterKind.radio => 'Tek seçim',
+        FilterKind.pills => 'Hap butonlar',
+      };
+}
+
+/// One admin-configurable filter block on a type-specific search page
+/// (e.g. "Kademe" for schools, "Branş" for teachers). Options match
+/// listings by folded word search over their text; the special id
+/// 'experience' compares against the owner's years of experience.
+class FilterSection {
+  FilterSection({
+    required this.id,
+    required this.title,
+    required this.kind,
+    List<String>? options,
+  }) : options = options ?? [];
+
+  final String id;
+  String title;
+  FilterKind kind;
+  final List<String> options;
+
+  /// Inactive sections are hidden on the search page but keep their options.
+  bool active = true;
+}
+
+/// The set of filter sections shown for one provider type's search page.
+class SearchPageConfig {
+  SearchPageConfig({required this.type, List<FilterSection>? sections})
+      : sections = sections ?? [];
+
+  final ProviderType type;
+  final List<FilterSection> sections;
+}
 
 extension ProviderTypeX on ProviderType {
   String get labelTr => switch (this) {
@@ -55,6 +122,9 @@ class AppUser {
 
   /// Set when this user owns a listing (teacher or institution).
   String? providerId;
+
+  /// Suspended by an admin; kept for the admin panel user table.
+  bool suspended = false;
 }
 
 class Review {
@@ -65,6 +135,7 @@ class Review {
     required this.stars,
     required this.comment,
     required this.date,
+    this.status = ReviewStatus.published,
   });
 
   final String id;
@@ -73,6 +144,7 @@ class Review {
   final int stars; // 1..5
   final String comment;
   final DateTime date;
+  ReviewStatus status;
 }
 
 /// A named program/package offered by a listing (e.g. "LGS Hazırlık").
@@ -145,6 +217,9 @@ class ProviderProfile {
   double monthlyPrice;
   final List<String> photoUrls;
 
+  /// Moderation state; only published listings appear in search.
+  ListingStatus status = ListingStatus.published;
+
   /// Short intro video URL (played via placeholder player in MVP).
   String? videoUrl;
   final List<String> features;
@@ -162,9 +237,17 @@ class ProviderProfile {
   /// e.g. "Ücretsiz deneme dersi + seviye sınavı".
   String? highlight;
 
-  double get avgRating => reviews.isEmpty
-      ? 0
-      : reviews.map((r) => r.stars).reduce((a, b) => a + b) / reviews.length;
+  List<Review> get publishedReviews =>
+      reviews.where((r) => r.status == ReviewStatus.published).toList();
+
+  /// Average of PUBLISHED reviews only (moderation-aware).
+  double get avgRating {
+    final visible =
+        reviews.where((r) => r.status == ReviewStatus.published).toList();
+    return visible.isEmpty
+        ? 0
+        : visible.map((r) => r.stars).reduce((a, b) => a + b) / visible.length;
+  }
 }
 
 class ChatMessage {
@@ -259,4 +342,7 @@ class JobPosting {
   final String description;
   final DateTime createdAt;
   final List<String> applicantUserIds;
+
+  /// Closed by an admin or the institution; hidden from teachers when false.
+  bool active = true;
 }

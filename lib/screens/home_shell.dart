@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../models/models.dart';
 import '../state/app_state.dart';
 import '../widgets/home_button.dart';
+import 'admin_panel_screen.dart';
 import 'browse_screen.dart';
 import 'compare_screen.dart';
 import 'jobs_screen.dart';
@@ -60,6 +61,7 @@ class _HomeShellState extends State<HomeShell> {
     final app = context.watch<AppState>();
     final user = app.currentUser;
     if (user == null) return const LoginScreen();
+    if (user.role == UserRole.admin) return const AdminPanelScreen();
 
     final items = _itemsFor(user.role);
     if (_index >= items.length) _index = 0;

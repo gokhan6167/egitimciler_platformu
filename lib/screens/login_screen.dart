@@ -30,7 +30,7 @@ class _LoginScreenState extends State<LoginScreen> {
   static const _tabs = [
     _RoleTab('Veli / Öğrenci', [UserRole.parent, UserRole.student]),
     _RoleTab('Öğretmen', [UserRole.teacher]),
-    _RoleTab('Kurum', [UserRole.institution]),
+    _RoleTab('Kurum', [UserRole.institution, UserRole.admin]),
   ];
 
   int _activeTab = 0;

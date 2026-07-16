@@ -275,13 +275,24 @@ class _BrowseScreenState extends State<BrowseScreen> {
 
   // ---------- Build ----------
 
+  static const _sortLabels = ['Önerilen', 'Puan', 'Ücret ↑', 'Ücret ↓'];
+
   List<ProviderProfile> _sorted(List<ProviderProfile> list) {
     final copy = List.of(list);
     switch (_sort) {
-      case 2:
-        copy.sort((a, b) => a.monthlyPrice.compareTo(b.monthlyPrice));
-      default:
+      case 1: // puan
         copy.sort((a, b) => b.avgRating.compareTo(a.avgRating));
+      case 2: // ücret artan
+        copy.sort((a, b) => a.monthlyPrice.compareTo(b.monthlyPrice));
+      case 3: // ücret azalan
+        copy.sort((a, b) => b.monthlyPrice.compareTo(a.monthlyPrice));
+      default: // önerilen: puan, eşitse yorum sayısı
+        copy.sort((a, b) {
+          final r = b.avgRating.compareTo(a.avgRating);
+          return r != 0
+              ? r
+              : b.publishedReviews.length.compareTo(a.publishedReviews.length);
+        });
     }
     return copy;
   }
@@ -467,6 +478,8 @@ class _BrowseScreenState extends State<BrowseScreen> {
   // ---------- Sidebar ----------
 
   Widget _sidebar(AppState app) {
+    final config = app.configFor(app.filterType);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -478,7 +491,10 @@ class _BrowseScreenState extends State<BrowseScreen> {
             ),
             InkWell(
               onTap: () {
-                app.setFilters(clear: true);
+                // Keep the type (this is the type's own page); reset the rest.
+                final type = app.filterType;
+                if (type != null) app.clearFacets(type: type);
+                app.setFilters(type: type);
                 setState(() => _sort = 0);
               },
               child: const Text('Temizle',
@@ -490,19 +506,26 @@ class _BrowseScreenState extends State<BrowseScreen> {
           ],
         ),
         const SizedBox(height: 8),
-        _section(
-          'Tür',
-          [
-            _radioRow('Tümü', app.filterType == null,
-                () => _setType(app, null),
-                count: app.providers.length),
-            for (final t in ProviderType.values)
-              _radioRow(t.labelTr, app.filterType == t,
-                  () => _setType(app, t),
-                  count:
-                      app.providers.where((p) => p.type == t).length),
-          ],
-        ),
+        if (config == null)
+          _section(
+            'Tür',
+            [
+              _radioRow('Tümü', app.filterType == null,
+                  () => _setType(app, null),
+                  count: app.filteredProviders.length),
+              for (final t in ProviderType.values)
+                _radioRow(t.labelTr, app.filterType == t,
+                    () => _setType(app, t),
+                    count: app.providers
+                        .where((p) =>
+                            p.type == t &&
+                            p.status == ListingStatus.published)
+                        .length),
+            ],
+          )
+        else
+          for (final section in config.sections.where((s) => s.active))
+            _facetSection(app, config.type, section),
         _section(
           'Aylık ücret',
           [
@@ -591,6 +614,105 @@ class _BrowseScreenState extends State<BrowseScreen> {
         maxPrice: app.filterMaxPrice,
         minRating: r,
       );
+
+  /// Renders one admin-configured filter section by its kind.
+  Widget _facetSection(AppState app, ProviderType type, FilterSection s) {
+    final selected = app.facetSelection(type, s.id);
+
+    switch (s.kind) {
+      case FilterKind.checkbox:
+        return _section(s.title, [
+          for (final o in s.options)
+            _checkRow(o, selected.contains(o),
+                () => app.toggleFacet(type, s, o)),
+        ]);
+      case FilterKind.radio:
+        return _section(s.title, [
+          _radioRow('Tümü', selected.isEmpty, () {
+            for (final o in Set.of(selected)) {
+              app.toggleFacet(type, s, o);
+            }
+          }),
+          for (final o in s.options)
+            _radioRow(o, selected.contains(o), () {
+              if (!selected.contains(o)) app.toggleFacet(type, s, o);
+            }),
+        ]);
+      case FilterKind.pills:
+        return _section(s.title, [
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (final o in s.options)
+                _facetPill(o, selected.contains(o),
+                    () => app.toggleFacet(type, s, o)),
+            ],
+          ),
+        ]);
+    }
+  }
+
+  Widget _checkRow(String label, bool selected, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 5),
+        child: Row(
+          children: [
+            Container(
+              width: 18,
+              height: 18,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: selected ? PusulaColors.primary : Colors.white,
+                border: Border.all(
+                    color: selected
+                        ? PusulaColors.primary
+                        : const Color(0xFFC6C2B9)),
+                borderRadius: BorderRadius.circular(5),
+              ),
+              child: selected
+                  ? const Icon(Icons.check, size: 13, color: Colors.white)
+                  : null,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(label,
+                  style: const TextStyle(
+                      fontSize: 14, color: PusulaColors.slate)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _facetPill(String label, bool selected, VoidCallback onTap) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(100),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? PusulaColors.primarySoft : PusulaColors.card,
+          border: Border.all(
+              color: selected
+                  ? PusulaColors.primary
+                  : PusulaColors.borderDark),
+          borderRadius: BorderRadius.circular(100),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+            color: selected ? PusulaColors.primaryDark : PusulaColors.body,
+          ),
+        ),
+      ),
+    );
+  }
 
   Widget _section(String title, List<Widget> children) {
     return Container(
@@ -713,9 +835,9 @@ class _BrowseScreenState extends State<BrowseScreen> {
             const Text('Sırala:',
                 style: TextStyle(fontSize: 13, color: PusulaColors.muted)),
             const SizedBox(width: 10),
-            for (var i = 0; i < 3; i++) ...[
+            for (var i = 0; i < _sortLabels.length; i++) ...[
               if (i > 0) const SizedBox(width: 6),
-              _sortPill(const ['Önerilen', 'Puan', 'Ücret'][i], i),
+              _sortPill(_sortLabels[i], i),
             ],
           ],
         ),
@@ -788,9 +910,14 @@ class _BrowseScreenState extends State<BrowseScreen> {
       );
     }
 
+    final config = app.configFor(app.filterType);
     return [
       if (app.filterType != null)
         chip(app.filterType!.labelTr, () => _setType(app, null)),
+      if (config != null)
+        for (final section in config.sections.where((s) => s.active))
+          for (final option in app.facetSelection(config.type, section.id))
+            chip(option, () => app.toggleFacet(config.type, section, option)),
       if (app.filterCity != null)
         chip(app.filterCity!, () => _setCity(app, null)),
       if (app.filterMaxPrice != null)
@@ -906,7 +1033,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
                               fontSize: 14, fontWeight: FontWeight.w700),
                           children: [
                             TextSpan(
-                              text: '(${p.reviews.length})',
+                              text: '(${p.publishedReviews.length})',
                               style: const TextStyle(
                                   fontWeight: FontWeight.w400,
                                   color: PusulaColors.faint),
@@ -1189,7 +1316,7 @@ class _ProviderCard extends StatelessWidget {
                   Row(
                     children: [
                       RatingStars(rating: provider.avgRating),
-                      Text(' (${provider.reviews.length} yorum)',
+                      Text(' (${provider.publishedReviews.length} yorum)',
                           style: const TextStyle(
                               fontSize: 12, color: Colors.grey)),
                       const Spacer(),

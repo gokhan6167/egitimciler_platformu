@@ -5,7 +5,116 @@ import '../models/models.dart';
 
 String _pic(int seed) => 'https://picsum.photos/seed/edu$seed/640/360';
 
+/// Fresh copies each call so AppState instances don't share mutable state.
+/// Sections mirror the type-specific "Arama - *" Claude Design files;
+/// admins can add/remove sections and options at runtime.
+List<SearchPageConfig> buildSearchConfigs() => [
+      SearchPageConfig(type: ProviderType.privateSchool, sections: [
+        FilterSection(
+          id: 'kademe',
+          title: 'Kademe',
+          kind: FilterKind.checkbox,
+          options: ['Anaokulu', 'İlkokul', 'Ortaokul', 'Lise'],
+        ),
+        FilterSection(
+          id: 'olanaklar',
+          title: 'Olanaklar',
+          kind: FilterKind.checkbox,
+          options: [
+            'Servis',
+            'Yemek',
+            'Yüzme Havuzu',
+            'Robotik Lab',
+            'Çift Dilli',
+            'Rehberlik',
+          ],
+        ),
+      ]),
+      SearchPageConfig(type: ProviderType.course, sections: [
+        FilterSection(
+          id: 'alan',
+          title: 'Kurs alanı',
+          kind: FilterKind.checkbox,
+          options: [
+            'Kodlama & Robotik',
+            'Yabancı Dil',
+            'Matematik & Fen',
+            'Müzik',
+            'Resim & Sanat',
+            'Spor',
+          ],
+        ),
+        FilterSection(
+          id: 'yas',
+          title: 'Yaş grubu',
+          kind: FilterKind.checkbox,
+          options: ['4–6 yaş', '7–10 yaş', '11–14 yaş', '15+ / yetişkin'],
+        ),
+        FilterSection(
+          id: 'gun',
+          title: 'Gün',
+          kind: FilterKind.pills,
+          options: ['Hafta içi', 'Hafta sonu', 'Akşam'],
+        ),
+      ]),
+      SearchPageConfig(type: ProviderType.dershane, sections: [
+        FilterSection(
+          id: 'program',
+          title: 'Hazırlık programı',
+          kind: FilterKind.checkbox,
+          options: ['LGS hazırlık', 'YKS (TYT–AYT)', 'Ara sınıf takviye', 'Etüt merkezi'],
+        ),
+        FilterSection(
+          id: 'olanaklar',
+          title: 'Olanaklar',
+          kind: FilterKind.checkbox,
+          options: [
+            'Deneme Sınavı',
+            'Birebir Etüt',
+            'Koçluk',
+            'Rehberlik',
+            'Veli Takip',
+          ],
+        ),
+      ]),
+      SearchPageConfig(type: ProviderType.privateTeacher, sections: [
+        FilterSection(
+          id: 'brans',
+          title: 'Branş',
+          kind: FilterKind.checkbox,
+          options: [
+            'Matematik',
+            'Fizik',
+            'Kimya',
+            'İngilizce',
+            'Türkçe & Edebiyat',
+            'Biyoloji',
+          ],
+        ),
+        FilterSection(
+          id: 'seviye',
+          title: 'Seviye',
+          kind: FilterKind.checkbox,
+          options: ['İlkokul (1–4)', 'Ortaokul (5–8)', 'Lise (9–12)', 'LGS / YKS hazırlık'],
+        ),
+        FilterSection(
+          id: 'sekil',
+          title: 'Ders şekli',
+          kind: FilterKind.radio,
+          options: ['Evde ders', 'Online'],
+        ),
+        FilterSection(
+          id: 'experience',
+          title: 'Deneyim',
+          kind: FilterKind.pills,
+          options: ['3+ yıl', '5+ yıl', '10+ yıl'],
+        ),
+      ]),
+    ];
+
 final List<AppUser> seedUsers = [
+  // Admin
+  AppUser(id: 'u_admin', name: 'Site Yöneticisi', role: UserRole.admin),
   // Parents
   AppUser(id: 'u_veli', name: 'Ayşe Yılmaz', role: UserRole.parent, city: 'İstanbul'),
   AppUser(id: 'u_veli2', name: 'Fatma Öztürk', role: UserRole.parent, city: 'İzmir'),
@@ -142,6 +251,25 @@ final List<AppUser> seedUsers = [
     city: 'Antalya',
     bio: 'Birebir etüt destekli LGS/YKS programları.',
     providerId: 'p_dershane5',
+  ),
+  // Pending registrations (admin approval queue)
+  AppUser(
+    id: 'u_bekleyen1',
+    name: 'Formül YKS Dershanesi',
+    role: UserRole.institution,
+    city: 'Konya',
+    bio: 'YKS hazırlıkta uzman kadro.',
+    providerId: 'p_bekleyen1',
+  ),
+  AppUser(
+    id: 'u_bekleyen2',
+    name: 'Mert Yılmaz',
+    role: UserRole.teacher,
+    city: 'Bursa',
+    subject: 'Fizik',
+    bio: 'Fizik öğretmeni, 7 yıl deneyim.',
+    experienceYears: 7,
+    providerId: 'p_bekleyen2',
   ),
   // Courses
   AppUser(
@@ -560,7 +688,18 @@ final List<ProviderProfile> seedProviders = [
     monthlyPrice: 7000,
     photoUrls: [_pic(86)],
     features: ['Birebir Etüt', 'Soru Çözüm Hattı', 'Mobil Uygulama'],
-    reviews: [],
+    reviews: [
+      Review(
+        id: 'r17',
+        authorId: 'u_veli3',
+        authorName: 'Anonim veli',
+        stars: 1,
+        comment: 'Kayıt parasını iade etmiyorlar, kimse muhatap olmuyor!!! '
+            'Kesinlikle uzak durun.',
+        date: DateTime(2026, 7, 14),
+        status: ReviewStatus.reported,
+      ),
+    ],
   ),
   // ---- Courses ----
   ProviderProfile(
@@ -645,7 +784,18 @@ final List<ProviderProfile> seedProviders = [
     monthlyPrice: 2800,
     photoUrls: [_pic(95)],
     features: ['Piyano', 'Gitar', 'Şan', 'Konservatuvar Hazırlık'],
-    reviews: [],
+    reviews: [
+      Review(
+        id: 'r18',
+        authorId: 'u_ogrenci5',
+        authorName: 'Burak Yıldız',
+        stars: 5,
+        comment: 'Gitar hocam harika, iletişim bilgilerimi profilimden '
+            'paylaşıyorum: 05xx xxx xx xx.',
+        date: DateTime(2026, 7, 15),
+        status: ReviewStatus.pending,
+      ),
+    ],
   ),
   ProviderProfile(
     id: 'p_ogretmen3',
@@ -668,6 +818,33 @@ final List<ProviderProfile> seedProviders = [
       ),
     ],
   ),
+  ..._pendingProviders,
+];
+
+/// Listings waiting for admin approval — hidden from public search.
+final List<ProviderProfile> _pendingProviders = [
+  ProviderProfile(
+    id: 'p_bekleyen1',
+    ownerUserId: 'u_bekleyen1',
+    name: 'Formül YKS Dershanesi',
+    type: ProviderType.dershane,
+    city: 'Konya',
+    description: 'YKS (TYT–AYT) hazırlıkta uzman kadro, haftalık deneme sınavı.',
+    monthlyPrice: 5500,
+    photoUrls: [_pic(96)],
+    features: ['Deneme Sınavı', 'Rehberlik'],
+  )..status = ListingStatus.pending,
+  ProviderProfile(
+    id: 'p_bekleyen2',
+    ownerUserId: 'u_bekleyen2',
+    name: 'Mert Yılmaz — Fizik',
+    type: ProviderType.privateTeacher,
+    city: 'Bursa',
+    description: '7 yıl deneyimli fizik öğretmeni; AYT fizik ve okula destek.',
+    monthlyPrice: 4500,
+    photoUrls: [_pic(97)],
+    features: ['Birebir Ders', 'AYT Fizik'],
+  )..status = ListingStatus.pending,
 ];
 
 final List<Conversation> seedConversations = [

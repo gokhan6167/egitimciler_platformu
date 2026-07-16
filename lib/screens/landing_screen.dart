@@ -467,7 +467,12 @@ class _LandingScreenState extends State<LandingScreen> {
   // ---------- Featured listings (real seed data) ----------
 
   Widget _featuredListings() {
-    final providers = context.watch<AppState>().providers.take(6).toList();
+    final providers = context
+        .watch<AppState>()
+        .providers
+        .where((p) => p.status == ListingStatus.published)
+        .take(6)
+        .toList();
     final columns = _narrow ? 1 : (_wide ? 3 : 2);
 
     return _maxWidth(

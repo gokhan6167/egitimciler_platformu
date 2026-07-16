@@ -11,13 +11,17 @@ class AppState extends ChangeNotifier {
         providers = List.of(seedProviders),
         conversations = List.of(seedConversations),
         offers = List.of(seedOffers),
-        jobs = List.of(seedJobs);
+        jobs = List.of(seedJobs),
+        searchConfigs = buildSearchConfigs();
 
   final List<AppUser> users;
   final List<ProviderProfile> providers;
   final List<Conversation> conversations;
   final List<Offer> offers;
   final List<JobPosting> jobs;
+
+  /// Admin-configurable filter sections per provider type search page.
+  final List<SearchPageConfig> searchConfigs;
 
   AppUser? currentUser;
 
@@ -62,7 +66,7 @@ class AppState extends ChangeNotifier {
         city: city,
         description: '',
         monthlyPrice: 0,
-      ));
+      )..status = ListingStatus.pending); // admin approves before publishing
     }
     final user = AppUser(
       id: id,
@@ -109,8 +113,12 @@ class AppState extends ChangeNotifier {
   double? filterMaxPrice;
   double filterMinRating = 0;
 
-  List<String> get cities =>
-      providers.map((p) => p.city).toSet().toList()..sort();
+  List<String> get cities => providers
+      .where((p) => p.status == ListingStatus.published)
+      .map((p) => p.city)
+      .toSet()
+      .toList()
+    ..sort();
 
   /// Case/accent-insensitive fold for Turkish text. Dart's toLowerCase()
   /// maps 'İ' to 'i' + combining dot (U+0307), so "İstanbul" would never
@@ -134,6 +142,7 @@ class AppState extends ChangeNotifier {
 
   List<ProviderProfile> get filteredProviders {
     return providers.where((p) {
+      if (p.status != ListingStatus.published) return false;
       if (filterType != null && p.type != filterType) return false;
       if (filterCity != null && p.city != filterCity) return false;
       if (filterMaxPrice != null && p.monthlyPrice > filterMaxPrice!) return false;
@@ -147,9 +156,119 @@ class AppState extends ChangeNotifier {
           if (!hay.contains(word)) return false;
         }
       }
+      if (!_matchesFacets(p)) return false;
       return true;
     }).toList()
       ..sort((a, b) => b.avgRating.compareTo(a.avgRating));
+  }
+
+  // ---------- Admin: moderation ----------
+
+  bool get isAdmin => currentUser?.role == UserRole.admin;
+
+  List<ProviderProfile> get pendingListings =>
+      providers.where((p) => p.status == ListingStatus.pending).toList();
+
+  void setListingStatus(ProviderProfile p, ListingStatus status) {
+    p.status = status;
+    notifyListeners();
+  }
+
+  void setUserSuspended(AppUser user, bool suspended) {
+    user.suspended = suspended;
+    notifyListeners();
+  }
+
+  void setReviewStatus(Review review, ReviewStatus status) {
+    review.status = status;
+    notifyListeners();
+  }
+
+  void setJobActive(JobPosting job, bool active) {
+    job.active = active;
+    notifyListeners();
+  }
+
+  /// Reviews for the moderation panel: reported and pending first,
+  /// then the most recent published ones.
+  List<(ProviderProfile, Review)> get moderationQueue {
+    final all = <(ProviderProfile, Review)>[
+      for (final p in providers)
+        for (final r in p.reviews) (p, r),
+    ];
+    int weight(ReviewStatus s) => switch (s) {
+          ReviewStatus.reported => 0,
+          ReviewStatus.pending => 1,
+          ReviewStatus.published => 2,
+          ReviewStatus.removed => 3,
+        };
+    all.sort((a, b) {
+      final w = weight(a.$2.status).compareTo(weight(b.$2.status));
+      return w != 0 ? w : b.$2.date.compareTo(a.$2.date);
+    });
+    return all;
+  }
+
+  // ---------- Admin: filter section management ----------
+
+  int _sectionCounter = 100;
+
+  void addFilterSection(
+    ProviderType type, {
+    required String title,
+    required FilterKind kind,
+    required List<String> options,
+  }) {
+    final config = configFor(type);
+    if (config == null || title.trim().isEmpty) return;
+    config.sections.add(FilterSection(
+      id: 'custom_${_sectionCounter++}',
+      title: title.trim(),
+      kind: kind,
+      options: options.map((o) => o.trim()).where((o) => o.isNotEmpty).toList(),
+    ));
+    notifyListeners();
+  }
+
+  void toggleFilterSectionActive(ProviderType type, String sectionId) {
+    final config = configFor(type);
+    if (config == null) return;
+    for (final s in config.sections) {
+      if (s.id == sectionId) s.active = !s.active;
+    }
+    notifyListeners();
+  }
+
+  void removeFilterSection(ProviderType type, String sectionId) {
+    final config = configFor(type);
+    if (config == null) return;
+    config.sections.removeWhere((s) => s.id == sectionId);
+    facetSelections.remove(_facetKey(type, sectionId));
+    notifyListeners();
+  }
+
+  void addFilterOption(ProviderType type, String sectionId, String option) {
+    final config = configFor(type);
+    final trimmed = option.trim();
+    if (config == null || trimmed.isEmpty) return;
+    for (final s in config.sections) {
+      if (s.id == sectionId && !s.options.contains(trimmed)) {
+        s.options.add(trimmed);
+      }
+    }
+    notifyListeners();
+  }
+
+  void removeFilterOption(ProviderType type, String sectionId, String option) {
+    final config = configFor(type);
+    if (config == null) return;
+    for (final s in config.sections) {
+      if (s.id == sectionId) {
+        s.options.remove(option);
+        facetSelections[_facetKey(type, sectionId)]?.remove(option);
+      }
+    }
+    notifyListeners();
   }
 
   void setSearch(String q) {
@@ -169,13 +288,106 @@ class AppState extends ChangeNotifier {
       filterCity = null;
       filterMaxPrice = null;
       filterMinRating = 0;
+      facetSelections.clear();
     } else {
+      if (type != filterType) facetSelections.clear();
       filterType = type;
       filterCity = city;
       filterMaxPrice = maxPrice;
       filterMinRating = minRating ?? 0;
     }
     notifyListeners();
+  }
+
+  // ---------- Configurable facets ----------
+
+  /// Selected options per filter section, keyed `type:sectionId`.
+  final Map<String, Set<String>> facetSelections = {};
+
+  SearchPageConfig? configFor(ProviderType? type) {
+    if (type == null) return null;
+    for (final c in searchConfigs) {
+      if (c.type == type) return c;
+    }
+    return null;
+  }
+
+  String _facetKey(ProviderType type, String sectionId) =>
+      '${type.name}:$sectionId';
+
+  Set<String> facetSelection(ProviderType type, String sectionId) =>
+      facetSelections[_facetKey(type, sectionId)] ?? const {};
+
+  void toggleFacet(ProviderType type, FilterSection section, String option) {
+    final key = _facetKey(type, section.id);
+    final set = facetSelections.putIfAbsent(key, () => <String>{});
+    if (set.contains(option)) {
+      set.remove(option);
+    } else {
+      if (section.kind == FilterKind.radio) set.clear();
+      set.add(option);
+    }
+    if (set.isEmpty) facetSelections.remove(key);
+    notifyListeners();
+  }
+
+  void clearFacets({ProviderType? type}) {
+    if (type == null) {
+      facetSelections.clear();
+    } else {
+      facetSelections.removeWhere((k, _) => k.startsWith('${type.name}:'));
+    }
+    notifyListeners();
+  }
+
+  /// All searchable text of a listing, folded for Turkish matching.
+  String _facetHaystack(ProviderProfile p) {
+    final owner = userById(p.ownerUserId);
+    return _fold([
+      p.name,
+      p.description,
+      p.city,
+      p.features.join(' '),
+      p.programs.map((x) => '${x.title} ${x.description}').join(' '),
+      p.hours.map((x) => '${x.day} ${x.time}').join(' '),
+      p.lessonModes.map((x) => '${x.day} ${x.time}').join(' '),
+      owner?.subject ?? '',
+      owner?.bio ?? '',
+    ].join(' '));
+  }
+
+  /// True when the listing matches every active facet section (options
+  /// within a section combine with OR, sections combine with AND).
+  bool _matchesFacets(ProviderProfile p) {
+    final config = configFor(filterType);
+    if (config == null) return true;
+
+    String? hay; // built lazily once per provider
+    for (final section in config.sections) {
+      final selected = facetSelection(config.type, section.id);
+      if (selected.isEmpty) continue;
+
+      if (section.id == 'experience') {
+        final owner = userById(p.ownerUserId);
+        final years = owner?.experienceYears ?? 0;
+        final wanted = selected
+            .map((o) => int.tryParse(o.split('+').first.trim()) ?? 0)
+            .reduce((a, b) => a < b ? a : b);
+        if (years < wanted) return false;
+        continue;
+      }
+
+      hay ??= _facetHaystack(p);
+      final anyOption = selected.any((option) {
+        // "Kodlama & Robotik" matches if any meaningful word matches.
+        return _fold(option)
+            .split(RegExp(r'[^a-z0-9]+'))
+            .where((w) => w.length >= 3)
+            .any(hay!.contains);
+      });
+      if (!anyOption) return false;
+    }
+    return true;
   }
 
   // ---------- Compare ----------
@@ -296,10 +508,11 @@ class AppState extends ChangeNotifier {
 
   // ---------- Jobs (visibility enforced here too) ----------
 
-  /// Job postings — only teachers may see them.
+  /// Job postings — only teachers may see them, and only active ones.
   List<JobPosting> get visibleJobs {
     if (currentUser?.role != UserRole.teacher) return [];
-    return jobs.toList()..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return jobs.where((j) => j.active).toList()
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
   }
 
   /// My own postings (institution view).

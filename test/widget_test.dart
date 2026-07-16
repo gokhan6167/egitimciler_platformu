@@ -128,7 +128,85 @@ void main() {
           contains('Kodlama Atölyesi'));
 
       app.setSearch('');
-      expect(app.filteredProviders.length, app.providers.length);
+      expect(
+          app.filteredProviders.length,
+          app.providers
+              .where((p) => p.status == ListingStatus.published)
+              .length,
+          reason: 'pending/suspended listings stay out of public search');
+    });
+
+    test('configurable facets filter listings per type', () {
+      final app = AppState();
+
+      // Okul sayfası: "Lise" kademesi program başlıklarından eşleşir.
+      app.setFilters(type: ProviderType.privateSchool);
+      final config = app.configFor(ProviderType.privateSchool)!;
+      final kademe = config.sections.firstWhere((s) => s.id == 'kademe');
+      app.toggleFacet(ProviderType.privateSchool, kademe, 'Lise');
+      expect(app.filteredProviders.map((p) => p.name),
+          contains('Bilge Koleji'));
+      expect(
+          app.filteredProviders
+              .every((p) => p.type == ProviderType.privateSchool),
+          isTrue);
+
+      // Öğretmen sayfası: deneyim filtresi sahibin yılına bakar.
+      app.setFilters(type: ProviderType.privateTeacher);
+      final tConfig = app.configFor(ProviderType.privateTeacher)!;
+      final deneyim =
+          tConfig.sections.firstWhere((s) => s.id == 'experience');
+      app.toggleFacet(ProviderType.privateTeacher, deneyim, '10+ yıl');
+      expect(app.filteredProviders.map((p) => p.name).toList(),
+          ['Zeynep Demir — Matematik']);
+
+      app.setFilters(clear: true);
+      expect(app.facetSelections, isEmpty);
+    });
+
+    test('admin can moderate listings, jobs, reviews and filters', () {
+      final app = AppState();
+      app.signIn(app.users.firstWhere((u) => u.role == UserRole.admin));
+      expect(app.isAdmin, isTrue);
+
+      // Listing approval publishes into search.
+      final pending = app.pendingListings.first;
+      final before = app.filteredProviders.length;
+      app.setListingStatus(pending, ListingStatus.published);
+      expect(app.filteredProviders.length, before + 1);
+      app.setListingStatus(pending, ListingStatus.pending); // restore seed
+
+      // Job closing hides it from teachers.
+      final job = app.jobs.first;
+      app.setJobActive(job, false);
+      app.signIn(app.users.firstWhere((u) => u.role == UserRole.teacher));
+      expect(app.visibleJobs.map((j) => j.id), isNot(contains(job.id)));
+      app.setJobActive(job, true); // restore seed
+
+      // Removing a review drops it from the average.
+      final provider = app.providerById('p_kurum1')!;
+      final review = provider.publishedReviews.first;
+      final countBefore = provider.publishedReviews.length;
+      app.setReviewStatus(review, ReviewStatus.removed);
+      expect(provider.publishedReviews.length, countBefore - 1);
+      app.setReviewStatus(review, ReviewStatus.published); // restore seed
+
+      // Filter section CRUD.
+      app.addFilterSection(ProviderType.privateSchool,
+          title: 'Müfredat türü',
+          kind: FilterKind.checkbox,
+          options: ['MEB', 'IB']);
+      final config = app.configFor(ProviderType.privateSchool)!;
+      final added = config.sections.last;
+      expect(added.title, 'Müfredat türü');
+      app.addFilterOption(ProviderType.privateSchool, added.id, 'Cambridge');
+      expect(added.options, contains('Cambridge'));
+      app.removeFilterOption(ProviderType.privateSchool, added.id, 'MEB');
+      expect(added.options, isNot(contains('MEB')));
+      app.toggleFilterSectionActive(ProviderType.privateSchool, added.id);
+      expect(added.active, isFalse);
+      app.removeFilterSection(ProviderType.privateSchool, added.id);
+      expect(config.sections.any((s) => s.id == added.id), isFalse);
     });
 
     test('filtering by type, city, price and rating works', () {
@@ -151,7 +229,11 @@ void main() {
       expect(app.filteredProviders.every((p) => p.avgRating >= 4.5), isTrue);
 
       app.setFilters(clear: true);
-      expect(app.filteredProviders.length, app.providers.length);
+      expect(
+          app.filteredProviders.length,
+          app.providers
+              .where((p) => p.status == ListingStatus.published)
+              .length);
     });
 
     test('compare list is capped at 3', () {

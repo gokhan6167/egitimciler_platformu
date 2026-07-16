@@ -447,7 +447,7 @@ class ProviderDetailScreen extends StatelessWidget {
                     color: PusulaColors.ink),
                 children: [
                   TextSpan(
-                      text: '(${p.reviews.length} değerlendirme)',
+                      text: '(${p.publishedReviews.length} değerlendirme)',
                       style: const TextStyle(
                           fontWeight: FontWeight.w400,
                           color: PusulaColors.faint)),
@@ -638,7 +638,7 @@ class ProviderDetailScreen extends StatelessWidget {
                       color: PusulaColors.ink),
                   children: [
                     TextSpan(
-                        text: '(${p.reviews.length} değerlendirme)',
+                        text: '(${p.publishedReviews.length} değerlendirme)',
                         style: const TextStyle(
                             fontWeight: FontWeight.w400,
                             color: PusulaColors.faint)),
@@ -697,13 +697,13 @@ class ProviderDetailScreen extends StatelessWidget {
             ('${owner?.experienceYears ?? 0} yıl', 'Deneyim'),
             (p.avgRating == 0 ? '—' : '★ ${p.avgRating.toStringAsFixed(1)}',
                 'Öğrenci puanı'),
-            ('${p.reviews.length}', 'Değerlendirme'),
+            ('${p.publishedReviews.length}', 'Değerlendirme'),
             (formatPrice(p.monthlyPrice), 'Aylık başlangıç'),
           ]
         : [
             (p.avgRating == 0 ? '—' : '★ ${p.avgRating.toStringAsFixed(1)}',
                 'Veli puanı'),
-            ('${p.reviews.length}', 'Değerlendirme'),
+            ('${p.publishedReviews.length}', 'Değerlendirme'),
             ('${p.photoUrls.length}', 'Fotoğraf'),
             (formatPrice(p.monthlyPrice), 'Aylık başlangıç'),
           ];
@@ -881,7 +881,7 @@ class ProviderDetailScreen extends StatelessWidget {
                 style: const TextStyle(fontWeight: FontWeight.w700),
                 children: [
                   TextSpan(
-                      text: '(${p.reviews.length})',
+                      text: '(${p.publishedReviews.length})',
                       style: const TextStyle(
                           fontWeight: FontWeight.w400,
                           color: PusulaColors.faint)),
@@ -905,13 +905,13 @@ class ProviderDetailScreen extends StatelessWidget {
             ),
           ),
         const SizedBox(height: 8),
-        if (p.reviews.isEmpty)
+        if (p.publishedReviews.isEmpty)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 12),
             child: Text('Henüz değerlendirme yok. İlk yorumu siz yazın!',
                 style: TextStyle(color: PusulaColors.body)),
           ),
-        for (final r in p.reviews.reversed)
+        for (final r in p.publishedReviews.reversed)
           Container(
             padding: const EdgeInsets.symmetric(vertical: 20),
             decoration: const BoxDecoration(
