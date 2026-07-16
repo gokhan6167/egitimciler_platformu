@@ -220,6 +220,10 @@ class ProviderProfile {
   /// Moderation state; only published listings appear in search.
   ListingStatus status = ListingStatus.published;
 
+  /// Card badge from the design: "Doğrulanmış", "Öne çıkan",
+  /// "En çok tercih" veya "Yeni".
+  String badge = 'Doğrulanmış';
+
   /// Short intro video URL (played via placeholder player in MVP).
   String? videoUrl;
   final List<String> features;

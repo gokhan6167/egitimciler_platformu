@@ -535,8 +535,8 @@ class _LandingScreenState extends State<LandingScreen> {
                     border: Border.all(color: PusulaColors.border),
                     borderRadius: BorderRadius.circular(100),
                   ),
-                  child: const Text('Doğrulanmış',
-                      style: TextStyle(
+                  child: Text(p.badge,
+                      style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                           color: PusulaColors.ink)),

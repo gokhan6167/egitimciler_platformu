@@ -980,8 +980,9 @@ class _BrowseScreenState extends State<BrowseScreen> {
                         color: PusulaColors.primarySoft,
                         borderRadius: BorderRadius.circular(100),
                       ),
-                      child: const Text('✓ Doğrulanmış',
-                          style: TextStyle(
+                      child: Text(
+                          p.badge == 'Doğrulanmış' ? '✓ Doğrulanmış' : p.badge,
+                          style: const TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
                               color: PusulaColors.primaryDark)),

@@ -306,6 +306,19 @@ final List<AppUser> seedUsers = [
   ),
 ];
 
+/// Card badges per listing id, mirroring the design's variety.
+const Map<String, String> _badges = {
+  'p_kurum2': 'Öne çıkan',
+  'p_ogretmen1': 'En çok tercih',
+  'p_ogretmen2': 'Yeni',
+  'p_okul2': 'Öne çıkan',
+  'p_okul4': 'Yeni',
+  'p_dershane2': 'En çok tercih',
+  'p_dershane5': 'Yeni',
+  'p_kurs2': 'Yeni',
+  'p_kurs4': 'Öne çıkan',
+};
+
 final List<ProviderProfile> seedProviders = [
   ProviderProfile(
     id: 'p_kurum1',
@@ -819,7 +832,10 @@ final List<ProviderProfile> seedProviders = [
     ],
   ),
   ..._pendingProviders,
-];
+]..forEach((p) {
+    final badge = _badges[p.id];
+    if (badge != null) p.badge = badge;
+  });
 
 /// Listings waiting for admin approval — hidden from public search.
 final List<ProviderProfile> _pendingProviders = [
