@@ -98,3 +98,6 @@
   gün) bilinçli olarak Tür/Şehir'e uyarlandı.
 - [x] 12/12 test (yeni: kayıt testi), analyze temiz, Vercel deploy,
   canlıda headless Chrome ile iki ekran da görsel doğrulandı.
+- [x] Landing hero araması v2 tasarımına birebir uyduruldu: kategori
+  sekmeleri arama hapının içinde (solda, ayraçlı), "İl / ilçe" bölümü
+  kaldırıldı; dar ekranda sekmeler barın üstünde kalır. Canlıda doğrulandı.

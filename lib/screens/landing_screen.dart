@@ -263,41 +263,18 @@ class _LandingScreenState extends State<LandingScreen> {
               constraints: const BoxConstraints(maxWidth: 720),
               child: Column(
                 children: [
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    alignment: WrapAlignment.center,
-                    children: [
-                      for (var i = 0; i < _tabs.length; i++)
-                        InkWell(
-                          borderRadius: BorderRadius.circular(100),
-                          onTap: () => setState(() => _activeTab = i),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 14, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: i == _activeTab
-                                  ? PusulaColors.primarySoft
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(100),
-                            ),
-                            child: Text(
-                              _tabs[i].label,
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: i == _activeTab
-                                    ? FontWeight.w600
-                                    : FontWeight.w500,
-                                color: i == _activeTab
-                                    ? PusulaColors.primaryDark
-                                    : PusulaColors.muted,
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
+                  // On narrow screens the tabs don't fit inside the pill.
+                  if (!_wide) ...[
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      alignment: WrapAlignment.center,
+                      children: [
+                        for (var i = 0; i < _tabs.length; i++) _heroTab(i),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                   _searchBar(),
                   const SizedBox(height: 28),
                   const Wrap(
@@ -325,9 +302,37 @@ class _LandingScreenState extends State<LandingScreen> {
 
   static const _statStyle = TextStyle(fontSize: 13, color: PusulaColors.muted);
 
+  /// Category tab pill; compact when rendered inside the search bar.
+  Widget _heroTab(int i, {bool compact = false}) {
+    final active = i == _activeTab;
+    return InkWell(
+      borderRadius: BorderRadius.circular(100),
+      onTap: () => setState(() => _activeTab = i),
+      child: Container(
+        padding: compact
+            ? const EdgeInsets.symmetric(horizontal: 12, vertical: 10)
+            : const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: active ? PusulaColors.primarySoft : Colors.transparent,
+          borderRadius: BorderRadius.circular(100),
+        ),
+        child: Text(
+          _tabs[i].label,
+          style: TextStyle(
+            fontSize: compact ? 13 : 14,
+            fontWeight: active ? FontWeight.w600 : FontWeight.w500,
+            color: active ? PusulaColors.primaryDark : PusulaColors.muted,
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Design v2 search pill: category tabs inside on the left, divider,
+  /// query input and the Ara button — all in one rounded bar.
   Widget _searchBar() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 6, 6, 6),
+      padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
         color: PusulaColors.card,
         border: Border.all(color: const Color(0xFFE3E1DB)),
@@ -342,6 +347,19 @@ class _LandingScreenState extends State<LandingScreen> {
       ),
       child: Row(
         children: [
+          if (_wide) ...[
+            const SizedBox(width: 4),
+            for (var i = 0; i < _tabs.length; i++) ...[
+              if (i > 0) const SizedBox(width: 2),
+              _heroTab(i, compact: true),
+            ],
+            Container(
+                width: 1,
+                height: 22,
+                color: PusulaColors.border,
+                margin: const EdgeInsets.symmetric(horizontal: 14)),
+          ] else
+            const SizedBox(width: 18),
           Expanded(
             child: TextField(
               controller: _searchController,
@@ -360,16 +378,7 @@ class _LandingScreenState extends State<LandingScreen> {
               ),
             ),
           ),
-          if (!_narrow) ...[
-            Container(
-                width: 1,
-                height: 22,
-                color: PusulaColors.border,
-                margin: const EdgeInsets.symmetric(horizontal: 16)),
-            const Text('İl / ilçe',
-                style: TextStyle(fontSize: 15, color: PusulaColors.faint)),
-          ],
-          const SizedBox(width: 16),
+          const SizedBox(width: 12),
           FilledButton(
             style: FilledButton.styleFrom(
                 padding:
