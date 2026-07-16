@@ -846,7 +846,7 @@ class _LandingScreenState extends State<LandingScreen> {
                       style: head, textAlign: TextAlign.center)),
               Expanded(
                   flex: 10,
-                  child: Text('Zirve Dershane',
+                  child: Text('Kavram Dershane',
                       style: head, textAlign: TextAlign.center)),
             ],
           ),
@@ -861,7 +861,7 @@ class _LandingScreenState extends State<LandingScreen> {
 
   Widget _careerSection() {
     const jobs = [
-      ('Matematik Öğretmeni (LGS)', 'Zirve Dershanesi · Ankara', 'Tam zamanlı'),
+      ('Matematik Öğretmeni (LGS)', 'Kavram Dershanesi · Ankara', 'Tam zamanlı'),
       ('Fen Bilimleri Öğretmeni', 'Bilge Koleji · İstanbul', 'Tam zamanlı'),
       ('İngilizce Eğitmeni', 'Fluent Akademi · Antalya', 'Yarı zamanlı'),
     ];

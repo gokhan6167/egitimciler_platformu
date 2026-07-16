@@ -172,7 +172,7 @@ final List<AppUser> seedUsers = [
   ),
   AppUser(
     id: 'u_kurum2',
-    name: 'Zirve Dershanesi',
+    name: 'Kavram Dershanesi',
     role: UserRole.institution,
     city: 'Ankara',
     bio: 'LGS ve YKS hazırlıkta 20 yıllık tecrübe.',
@@ -363,7 +363,7 @@ final List<ProviderProfile> seedProviders = [
   ProviderProfile(
     id: 'p_kurum2',
     ownerUserId: 'u_kurum2',
-    name: 'Zirve Dershanesi',
+    name: 'Kavram Dershanesi',
     type: ProviderType.dershane,
     city: 'Ankara',
     description:
