@@ -37,6 +37,48 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Demo registration: creates the account (and an empty listing for
+  /// educators so "Profilim" works), then signs it in.
+  AppUser registerUser({
+    required String name,
+    required UserRole role,
+    String city = '',
+    String subject = '',
+    ProviderType providerType = ProviderType.course,
+  }) {
+    final id = _newId('u');
+    String? providerId;
+    if (role.isEducator) {
+      providerId = _newId('p');
+      providers.add(ProviderProfile(
+        id: providerId,
+        ownerUserId: id,
+        name: role == UserRole.teacher
+            ? '$name — ${subject.isEmpty ? 'Özel Ders' : subject}'
+            : name,
+        type: role == UserRole.teacher
+            ? ProviderType.privateTeacher
+            : providerType,
+        city: city,
+        description: '',
+        monthlyPrice: 0,
+      ));
+    }
+    final user = AppUser(
+      id: id,
+      name: name,
+      role: role,
+      city: city,
+      subject: subject,
+      providerId: providerId,
+      seekingJob: role == UserRole.teacher,
+    );
+    users.add(user);
+    currentUser = user;
+    notifyListeners();
+    return user;
+  }
+
   // ---------- Lookups ----------
 
   AppUser? userById(String id) {

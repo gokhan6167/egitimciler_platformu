@@ -88,6 +88,30 @@ void main() {
   });
 
   group('core flows', () {
+    test('registration creates the account and signs it in', () {
+      final app = AppState();
+
+      final parent = app.registerUser(name: 'Deneme Veli', role: UserRole.parent);
+      expect(app.currentUser, parent);
+      expect(parent.providerId, isNull);
+
+      final teacher = app.registerUser(
+          name: 'Deneme Öğretmen', role: UserRole.teacher, subject: 'Kimya');
+      expect(teacher.providerId, isNotNull);
+      expect(app.providerById(teacher.providerId!)!.type,
+          ProviderType.privateTeacher);
+      expect(app.visibleJobs, isNotEmpty,
+          reason: 'new teachers can browse job postings');
+
+      final institution = app.registerUser(
+          name: 'Deneme Koleji',
+          role: UserRole.institution,
+          providerType: ProviderType.privateSchool);
+      expect(institution.providerId, isNotNull);
+      expect(app.providerById(institution.providerId!)!.type,
+          ProviderType.privateSchool);
+    });
+
     test('search is Turkish case/accent insensitive', () {
       final app = AppState();
 

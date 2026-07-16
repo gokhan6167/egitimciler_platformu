@@ -79,3 +79,22 @@
   Flutter service worker'ın eski sürümü önbelleğe almasıydı → sert
   yenileme (Ctrl+F5) gerekir. Hero aramada seçili sekme tür filtresi
   uygular; yanlış sekmede arama 0 sonuç verebilir (olası UX karışıklığı).
+
+## 2026-07-16 — Kayıt Ol + yeni arama sayfası tasarımları
+- [x] Kayıt ekranı "Kayit Ol.dc.html" tasarımından (register_screen.dart):
+  rol kartları (Veli/Öğrenci, Öğretmen, Kurum), role göre alanlar (Kurum
+  adı + tür dropdown'u, Branş), KVKK onayı, role göre yan panel.
+  AppState.registerUser: hesap oluşturur, eğitimcilere boş ilan profili
+  açar, otomatik giriş yapar. Landing "Kayıt ol" ve login "Ücretsiz kayıt
+  olun" buna bağlandı.
+- [x] Arama sonuçları "Arama - Ozel Okul/Kurs.dc.html" tasarımından
+  yeniden yazıldı (BrowseScreen geniş düzen): pill arama çubuğu + il
+  dropdown + Ara; 264px filtre kenar çubuğu (Tür sayaçlı radio, ücret
+  slider, Şehir, En az puan pilleri, Temizle), sıralama pilleri
+  (Önerilen/Puan/Ücret), kaldırılabilir aktif filtre çipleri, yatay ilan
+  kartları (görsel + rozetler + etiketler + açıklama + fiyat +
+  Karşılaştır/Mesaj/Teklif iste). Dar ekranda eski kompakt düzen korunur.
+  Tasarımlardaki modele uymayan filtreler (kademe, mesafe, yaş grubu,
+  gün) bilinçli olarak Tür/Şehir'e uyarlandı.
+- [x] 12/12 test (yeni: kayıt testi), analyze temiz, Vercel deploy,
+  canlıda headless Chrome ile iki ekran da görsel doğrulandı.

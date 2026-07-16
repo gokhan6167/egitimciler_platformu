@@ -6,6 +6,7 @@ import '../state/app_state.dart';
 import '../theme/pusula_theme.dart';
 import 'home_shell.dart';
 import 'landing_screen.dart';
+import 'register_screen.dart';
 
 /// Sign-in screen from the "Giris Yap" Claude Design file: split layout with
 /// the form on the left and a testimonial side panel on the right.
@@ -243,7 +244,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         children: [
                           WidgetSpan(
                             child: InkWell(
-                              onTap: () => _comingSoon('Kayıt'),
+                              onTap: () => Navigator.of(context).pushReplacement(
+                                MaterialPageRoute(
+                                    builder: (_) => const RegisterScreen()),
+                              ),
                               child: const Text('Ücretsiz kayıt olun',
                                   style: TextStyle(
                                       fontSize: 14,

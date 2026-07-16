@@ -10,6 +10,7 @@ import 'compare_screen.dart';
 import 'home_shell.dart';
 import 'login_screen.dart';
 import 'provider_detail_screen.dart';
+import 'register_screen.dart';
 
 /// Public marketing page, implemented from the "Pusula Egitim v2"
 /// Claude Design file. All CTAs lead to the (demo) sign-in screen.
@@ -55,6 +56,12 @@ class _LandingScreenState extends State<LandingScreen> {
   void _goToSignIn() {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const LoginScreen()),
+    );
+  }
+
+  void _goToRegister() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const RegisterScreen()),
     );
   }
 
@@ -207,7 +214,7 @@ class _LandingScreenState extends State<LandingScreen> {
                     style: FilledButton.styleFrom(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 18, vertical: 10)),
-                    onPressed: _goToSignIn,
+                    onPressed: _goToRegister,
                     child: const Text('Kayıt ol'),
                   ),
                 ],
@@ -1026,7 +1033,7 @@ class _LandingScreenState extends State<LandingScreen> {
                     onPressed: _openResults,
                     child: const Text('Aramaya başla')),
                 OutlinedButton(
-                    onPressed: _goToSignIn,
+                    onPressed: _goToRegister,
                     child: const Text('İlan / iş ilanı ver')),
               ],
             ),
