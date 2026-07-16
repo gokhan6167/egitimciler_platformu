@@ -125,3 +125,13 @@
   puppeteer ile TEK TEK doğrulandı: 4 tür sayfası ve filtreleri, Lise facet
   tıklaması (2 sonuç + çip), admin girişi, 6 panel görünümü, Onayla akışı
   (rozet 2→1), Montessori seçeneği ekleme. Ekran görüntüleriyle kayıtlı.
+
+## 2026-07-16 — Diğer güncellemeler
+- [x] Zirve Dershanesi → Kavram Dershanesi (veri + landing tablo/kariyer).
+- [x] İlan rozetleri çeşitlendi: ProviderProfile.badge (Doğrulanmış/Öne
+  çıkan/En çok tercih/Yeni), landing + arama kartlarında gösteriliyor.
+- [x] v2 tasarım GÜNCELLENDİ ve uygulandı: hero başlık kısaldı ("En uygun
+  eğitimi karşılaştırarak bulun"), arama hapı artık metin girişi değil —
+  4 renkli kategori butonu (yeşil/amber/indigo/pembe) + Ara; butonlar
+  doğrudan tür sayfasını açar. Metin araması sonuç sayfasındaki çubukta
+  yaşamaya devam ediyor. Widget testleri güncellendi (hero tab akışı).

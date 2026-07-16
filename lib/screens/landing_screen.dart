@@ -21,23 +21,25 @@ class LandingScreen extends StatefulWidget {
   State<LandingScreen> createState() => _LandingScreenState();
 }
 
+/// Hero category tab from the v2 design: each has its own pastel color
+/// and opens that type's search page directly.
 class _SearchTab {
-  const _SearchTab(this.label, this.hint);
+  const _SearchTab(this.label, this.bg, this.fg);
 
   final String label;
-  final String hint;
+  final Color bg;
+  final Color fg;
 }
 
 class _LandingScreenState extends State<LandingScreen> {
   int _activeTab = 0;
-  final _searchController = TextEditingController();
   final _howItWorksKey = GlobalKey();
 
   static const _tabs = [
-    _SearchTab('Özel Okul', 'Örn. bilim koleji, İngilizce ağırlıklı'),
-    _SearchTab('Kurs', 'Örn. matematik, kodlama, İngilizce'),
-    _SearchTab('Dershane', 'Örn. LGS, YKS hazırlık'),
-    _SearchTab('Özel Öğretmen', 'Örn. birebir matematik, evde'),
+    _SearchTab('Özel Okul', Color(0xFFEAF3EF), Color(0xFF0B5E4C)),
+    _SearchTab('Kurs', Color(0xFFFBF1DF), Color(0xFF8A6212)),
+    _SearchTab('Dershane', Color(0xFFEEF0FB), Color(0xFF3A46A0)),
+    _SearchTab('Özel Öğretmen', Color(0xFFF7EAF1), Color(0xFF8A2E63)),
   ];
 
   static const _tabTypes = [
@@ -46,12 +48,6 @@ class _LandingScreenState extends State<LandingScreen> {
     ProviderType.dershane,
     ProviderType.privateTeacher,
   ];
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
 
   void _goToSignIn() {
     Navigator.of(context).push(
@@ -62,17 +58,6 @@ class _LandingScreenState extends State<LandingScreen> {
   void _goToRegister() {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const RegisterScreen()),
-    );
-  }
-
-  /// Run the hero search: store query + selected type, then open the
-  /// results page — no sign-in required to browse and compare.
-  void _submitSearch() {
-    final app = context.read<AppState>();
-    app.setSearch(_searchController.text);
-    app.setFilters(type: _tabTypes[_activeTab]);
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const SearchResultsScreen()),
     );
   }
 
@@ -237,44 +222,31 @@ class _LandingScreenState extends State<LandingScreen> {
             ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 760),
               child: Text(
-                'Çocuğunuza en uygun eğitimi karşılaştırarak bulun.',
+                'En uygun eğitimi karşılaştırarak bulun',
                 textAlign: TextAlign.center,
                 style: pusulaHeading(
-                  fontSize: _narrow ? 31 : (_wide ? 54 : 38),
+                  fontSize: _narrow ? 31 : (_wide ? 40 : 34),
                   fontWeight: FontWeight.w800,
-                  height: 1.08,
-                  letterSpacingFactor: -0.03,
+                  height: 1.15,
+                  letterSpacingFactor: -0.02,
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 12),
             ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 560),
+              constraints: const BoxConstraints(maxWidth: 480),
               child: const Text(
-                'Özel okul, kurs, dershane ve özel öğretmenleri tek yerde inceleyin. '
-                'Puanları görün, teklif alın, mesajlaşın.',
+                'Okul, kurs, dershane ve özel öğretmenler tek yerde',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                    fontSize: 18, height: 1.65, color: PusulaColors.body),
+                    fontSize: 16, height: 1.6, color: PusulaColors.body),
               ),
             ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 32),
             ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 720),
               child: Column(
                 children: [
-                  // On narrow screens the tabs don't fit inside the pill.
-                  if (!_wide) ...[
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      alignment: WrapAlignment.center,
-                      children: [
-                        for (var i = 0; i < _tabs.length; i++) _heroTab(i),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                  ],
                   _searchBar(),
                   const SizedBox(height: 28),
                   const Wrap(
@@ -302,41 +274,45 @@ class _LandingScreenState extends State<LandingScreen> {
 
   static const _statStyle = TextStyle(fontSize: 13, color: PusulaColors.muted);
 
-  /// Category tab pill; compact when rendered inside the search bar.
-  Widget _heroTab(int i, {bool compact = false}) {
-    final active = i == _activeTab;
+  /// Colored category button inside the search pill; opens the type's
+  /// own search page, exactly as in the v2 design.
+  Widget _heroTab(int i) {
+    final tab = _tabs[i];
     return InkWell(
       borderRadius: BorderRadius.circular(100),
-      onTap: () => setState(() => _activeTab = i),
+      onTap: () {
+        setState(() => _activeTab = i);
+        _browseCategory(_tabTypes[i]);
+      },
       child: Container(
-        padding: compact
-            ? const EdgeInsets.symmetric(horizontal: 12, vertical: 10)
-            : const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: active ? PusulaColors.primarySoft : Colors.transparent,
+          color: tab.bg,
           borderRadius: BorderRadius.circular(100),
         ),
         child: Text(
-          _tabs[i].label,
+          tab.label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            fontSize: compact ? 13 : 14,
-            fontWeight: active ? FontWeight.w600 : FontWeight.w500,
-            color: active ? PusulaColors.primaryDark : PusulaColors.muted,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: tab.fg,
           ),
         ),
       ),
     );
   }
 
-  /// Design v2 search pill: category tabs inside on the left, divider,
-  /// query input and the Ara button — all in one rounded bar.
+  /// Design v2 search pill: four colored category buttons + Ara.
   Widget _searchBar() {
-    return Container(
+    final pill = Container(
       padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
         color: PusulaColors.card,
         border: Border.all(color: const Color(0xFFE3E1DB)),
-        borderRadius: BorderRadius.circular(100),
+        borderRadius: BorderRadius.circular(_narrow ? 24 : 100),
         boxShadow: [
           BoxShadow(
             color: PusulaColors.ink.withValues(alpha: 0.04),
@@ -345,50 +321,47 @@ class _LandingScreenState extends State<LandingScreen> {
           ),
         ],
       ),
-      child: Row(
-        children: [
-          if (_wide) ...[
-            const SizedBox(width: 4),
-            for (var i = 0; i < _tabs.length; i++) ...[
-              if (i > 0) const SizedBox(width: 2),
-              _heroTab(i, compact: true),
-            ],
-            Container(
-                width: 1,
-                height: 22,
-                color: PusulaColors.border,
-                margin: const EdgeInsets.symmetric(horizontal: 14)),
-          ] else
-            const SizedBox(width: 18),
-          Expanded(
-            child: TextField(
-              controller: _searchController,
-              onSubmitted: (_) => _submitSearch(),
-              style: const TextStyle(fontSize: 15, color: PusulaColors.ink),
-              decoration: InputDecoration(
-                hintText: _tabs[_activeTab].hint,
-                hintStyle:
-                    const TextStyle(fontSize: 15, color: PusulaColors.faint),
-                border: InputBorder.none,
-                enabledBorder: InputBorder.none,
-                focusedBorder: InputBorder.none,
-                filled: false,
-                isDense: true,
-                contentPadding: EdgeInsets.zero,
-              ),
+      child: _narrow
+          ? Column(
+              children: [
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  alignment: WrapAlignment.center,
+                  children: [
+                    for (var i = 0; i < _tabs.length; i++) _heroTab(i),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12)),
+                    onPressed: () => _browseCategory(_tabTypes[_activeTab]),
+                    child: const Text('Ara'),
+                  ),
+                ),
+              ],
+            )
+          : Row(
+              children: [
+                for (var i = 0; i < _tabs.length; i++) ...[
+                  if (i > 0) const SizedBox(width: 6),
+                  Expanded(child: _heroTab(i)),
+                ],
+                const SizedBox(width: 6),
+                FilledButton(
+                  style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 26, vertical: 12)),
+                  onPressed: () => _browseCategory(_tabTypes[_activeTab]),
+                  child: const Text('Ara'),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(width: 12),
-          FilledButton(
-            style: FilledButton.styleFrom(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 26, vertical: 12)),
-            onPressed: _submitSearch,
-            child: const Text('Ara'),
-          ),
-        ],
-      ),
     );
+    return pill;
   }
 
   // ---------- Categories ----------

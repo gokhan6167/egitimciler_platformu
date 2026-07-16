@@ -11,7 +11,7 @@ void main() {
     await tester.pump();
 
     // Hero from the Pusula design.
-    expect(find.text('Çocuğunuza en uygun eğitimi karşılaştırarak bulun.'),
+    expect(find.text('En uygun eğitimi karşılaştırarak bulun'),
         findsOneWidget);
     expect(find.text('Kayıt ol'), findsOneWidget);
 
@@ -34,24 +34,20 @@ void main() {
     expect(find.text('Tekrar hoş geldiniz'), findsNothing);
   });
 
-  testWidgets('hero search reaches results and detail without sign-in',
+  testWidgets('hero category tab reaches results and detail without sign-in',
       (tester) async {
     await tester.pumpWidget(const EgitimcilerApp());
     await tester.pump();
 
-    // Type a Turkish-cased query and search (default tab: Özel Okul).
-    await tester.enterText(find.byType(TextField).first, 'istanbul');
-    await tester.ensureVisible(find.text('Ara'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Ara'));
+    // Colored hero tab opens the type's own search page (v2 design).
+    await tester.tap(find.text('Dershane').first);
     await tester.pumpAndSettle();
 
-    // Guest results page shows the matching school despite İ/i casing.
     expect(find.text('Arama sonuçları'), findsOneWidget);
-    expect(find.textContaining('Bilge Koleji'), findsWidgets);
+    expect(find.textContaining('Kavram Dershanesi'), findsWidgets);
 
     // Listing detail opens without an account and offers seeker actions.
-    await tester.tap(find.textContaining('Bilge Koleji').first);
+    await tester.tap(find.textContaining('Kavram Dershanesi').first);
     await tester.pumpAndSettle();
     expect(find.text('Teklif iste'), findsOneWidget);
   });
