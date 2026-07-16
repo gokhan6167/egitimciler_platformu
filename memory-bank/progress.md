@@ -135,3 +135,11 @@
   4 renkli kategori butonu (yeşil/amber/indigo/pembe) + Ara; butonlar
   doğrudan tür sayfasını açar. Metin araması sonuç sayfasındaki çubukta
   yaşamaya devam ediyor. Widget testleri güncellendi (hero tab akışı).
+
+## 2026-07-17 — Landing minimal v2 (tasarım yeniden güncellendi)
+- [x] Landing tamamen sadeleşti: ince nav (sadece logo + Giriş/Kayıt,
+  nav linkleri yok), hero + 3 istatistik, "Öne çıkan ilanlar" (en yüksek
+  puanlı 3 gerçek ilan, tıklayınca detay), sola hizalı 3 adım şeridi,
+  tek satır kariyer şeridi, tek satır footer. KALDIRILAN bölümler:
+  kategoriler ızgarası, karşılaştırma bölümü, büyük kariyer kartı,
+  alıntı, CTA. "Tümünü gör" → genel sonuç sayfası. Canlıda doğrulandı.

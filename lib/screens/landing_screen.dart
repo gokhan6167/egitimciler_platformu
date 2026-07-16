@@ -6,14 +6,14 @@ import '../state/app_state.dart';
 import '../theme/pusula_theme.dart';
 import '../widgets/common.dart';
 import 'browse_screen.dart';
-import 'compare_screen.dart';
 import 'home_shell.dart';
 import 'login_screen.dart';
 import 'provider_detail_screen.dart';
 import 'register_screen.dart';
 
-/// Public marketing page, implemented from the "Pusula Egitim v2"
-/// Claude Design file. All CTAs lead to the (demo) sign-in screen.
+/// Public landing page from the minimal "Pusula Egitim v2" design:
+/// slim nav, hero with colored category buttons, three featured listings,
+/// a three-step strip, a career strip and a one-line footer.
 class LandingScreen extends StatefulWidget {
   const LandingScreen({super.key});
 
@@ -21,8 +21,8 @@ class LandingScreen extends StatefulWidget {
   State<LandingScreen> createState() => _LandingScreenState();
 }
 
-/// Hero category tab from the v2 design: each has its own pastel color
-/// and opens that type's search page directly.
+/// Hero category tab: each has its own pastel color and opens that
+/// type's search page directly.
 class _SearchTab {
   const _SearchTab(this.label, this.bg, this.fg);
 
@@ -33,7 +33,6 @@ class _SearchTab {
 
 class _LandingScreenState extends State<LandingScreen> {
   int _activeTab = 0;
-  final _howItWorksKey = GlobalKey();
 
   static const _tabs = [
     _SearchTab('Özel Okul', Color(0xFFEAF3EF), Color(0xFF0B5E4C)),
@@ -49,6 +48,9 @@ class _LandingScreenState extends State<LandingScreen> {
     ProviderType.privateTeacher,
   ];
 
+  bool get _wide => MediaQuery.of(context).size.width >= 980;
+  bool get _narrow => MediaQuery.of(context).size.width < 620;
+
   void _goToSignIn() {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const LoginScreen()),
@@ -61,7 +63,7 @@ class _LandingScreenState extends State<LandingScreen> {
     );
   }
 
-  /// Category cards open the same results page filtered by type.
+  /// Category buttons open the type's own search page.
   void _browseCategory(ProviderType type) {
     final app = context.read<AppState>();
     app.setSearch('');
@@ -71,7 +73,7 @@ class _LandingScreenState extends State<LandingScreen> {
     );
   }
 
-  /// "Keşfet" style links: open the guest results page unfiltered.
+  /// "Tümünü gör": the results page with no filters.
   void _openResults() {
     final app = context.read<AppState>();
     app.setSearch('');
@@ -81,22 +83,11 @@ class _LandingScreenState extends State<LandingScreen> {
     );
   }
 
-  void _openCompare() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const CompareScreen()),
+  void _comingSoon(String what) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('$what sayfası demo sürümünde henüz yok.')),
     );
   }
-
-  void _scrollToHowItWorks() {
-    final ctx = _howItWorksKey.currentContext;
-    if (ctx != null) {
-      Scrollable.ensureVisible(ctx,
-          duration: const Duration(milliseconds: 450), curve: Curves.easeOut);
-    }
-  }
-
-  bool get _wide => MediaQuery.of(context).size.width >= 980;
-  bool get _narrow => MediaQuery.of(context).size.width < 620;
 
   @override
   Widget build(BuildContext context) {
@@ -106,23 +97,17 @@ class _LandingScreenState extends State<LandingScreen> {
           _navBar(),
           Expanded(
             child: SingleChildScrollView(
-              child: Center(
-                child: Column(
-                  children: [
-                    _hero(),
-                    _sectionDivider(),
-                    _categories(),
-                    _sectionDivider(),
-                    _featuredListings(),
-                    _howItWorks(),
-                    _compareSection(),
-                    _careerSection(),
-                    _testimonial(),
-                    _sectionDivider(),
-                    _cta(),
-                    _footer(),
-                  ],
-                ),
+              child: Column(
+                children: [
+                  _hero(),
+                  _featured(),
+                  _divider(),
+                  _how(),
+                  _divider(),
+                  _careerStrip(),
+                  _divider(),
+                  _footer(),
+                ],
               ),
             ),
           ),
@@ -131,11 +116,10 @@ class _LandingScreenState extends State<LandingScreen> {
     );
   }
 
-  Widget _sectionDivider() =>
-      Container(height: 1, color: PusulaColors.border);
+  Widget _divider() => Container(height: 1, color: PusulaColors.border);
 
   Widget _maxWidth(Widget child, {EdgeInsets? padding}) => Container(
-        constraints: const BoxConstraints(maxWidth: 1120),
+        constraints: const BoxConstraints(maxWidth: 1060),
         padding: padding ?? const EdgeInsets.symmetric(horizontal: 32),
         child: child,
       );
@@ -143,6 +127,8 @@ class _LandingScreenState extends State<LandingScreen> {
   // ---------- Nav ----------
 
   Widget _navBar() {
+    final signedIn = context.watch<AppState>().currentUser != null;
+
     return Container(
       decoration: const BoxDecoration(
         color: PusulaColors.background,
@@ -157,28 +143,10 @@ class _LandingScreenState extends State<LandingScreen> {
                 const PusulaLogo(),
                 const SizedBox(width: 9),
                 Text('Pusula Eğitim',
-                    style: pusulaHeading(fontSize: 17, letterSpacingFactor: -0.01)),
+                    style: pusulaHeading(
+                        fontSize: 17, letterSpacingFactor: -0.01)),
                 const Spacer(),
-                if (_wide) ...[
-                  for (final (link, onTap) in [
-                    ('Nasıl çalışır', _scrollToHowItWorks),
-                    ('Keşfet', _openResults),
-                    ('Karşılaştır', _openCompare),
-                    // Career area is the closed network — account required.
-                    ('Öğretmen kariyeri', _goToSignIn),
-                  ])
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 13),
-                      child: InkWell(
-                        onTap: onTap,
-                        child: Text(link,
-                            style: const TextStyle(
-                                fontSize: 14, color: PusulaColors.body)),
-                      ),
-                    ),
-                  const SizedBox(width: 12),
-                ],
-                if (context.watch<AppState>().currentUser != null)
+                if (signedIn)
                   FilledButton(
                     style: FilledButton.styleFrom(
                         padding: const EdgeInsets.symmetric(
@@ -216,7 +184,7 @@ class _LandingScreenState extends State<LandingScreen> {
   Widget _hero() {
     return _maxWidth(
       Padding(
-        padding: EdgeInsets.only(top: _narrow ? 56 : 96, bottom: 72),
+        padding: EdgeInsets.only(top: _narrow ? 56 : 96, bottom: 88),
         child: Column(
           children: [
             ConstrainedBox(
@@ -225,7 +193,7 @@ class _LandingScreenState extends State<LandingScreen> {
                 'En uygun eğitimi karşılaştırarak bulun',
                 textAlign: TextAlign.center,
                 style: pusulaHeading(
-                  fontSize: _narrow ? 31 : (_wide ? 40 : 34),
+                  fontSize: _narrow ? 30 : (_wide ? 40 : 34),
                   fontWeight: FontWeight.w800,
                   height: 1.15,
                   letterSpacingFactor: -0.02,
@@ -248,9 +216,9 @@ class _LandingScreenState extends State<LandingScreen> {
               child: Column(
                 children: [
                   _searchBar(),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 24),
                   const Wrap(
-                    spacing: 14,
+                    spacing: 12,
                     runSpacing: 6,
                     alignment: WrapAlignment.center,
                     children: [
@@ -259,8 +227,6 @@ class _LandingScreenState extends State<LandingScreen> {
                       Text('62.000+ veli değerlendirmesi', style: _statStyle),
                       Text('·', style: _statStyle),
                       Text('81 il', style: _statStyle),
-                      Text('·', style: _statStyle),
-                      Text('%98 teklif yanıt oranı', style: _statStyle),
                     ],
                   ),
                 ],
@@ -272,10 +238,9 @@ class _LandingScreenState extends State<LandingScreen> {
     );
   }
 
-  static const _statStyle = TextStyle(fontSize: 13, color: PusulaColors.muted);
+  static const _statStyle = TextStyle(fontSize: 13, color: PusulaColors.faint);
 
-  /// Colored category button inside the search pill; opens the type's
-  /// own search page, exactly as in the v2 design.
+  /// Colored category button inside the search pill.
   Widget _heroTab(int i) {
     final tab = _tabs[i];
     return InkWell(
@@ -305,9 +270,9 @@ class _LandingScreenState extends State<LandingScreen> {
     );
   }
 
-  /// Design v2 search pill: four colored category buttons + Ara.
+  /// Search pill: four colored category buttons + Ara.
   Widget _searchBar() {
-    final pill = Container(
+    return Container(
       padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
         color: PusulaColors.card,
@@ -361,115 +326,56 @@ class _LandingScreenState extends State<LandingScreen> {
               ],
             ),
     );
-    return pill;
   }
 
-  // ---------- Categories ----------
+  // ---------- Featured (3 listings) ----------
 
-  Widget _categories() {
-    const cats = [
-      ('01', 'Özel Okullar', 'Anaokulundan liseye kurumsal okullar.', '1.240'),
-      ('02', 'Kurslar', 'Dil, kodlama, sanat ve beceri kursları.', '3.080'),
-      ('03', 'Dershaneler', "LGS ve YKS'ye hazırlık merkezleri.", '2.410'),
-      ('04', 'Özel Öğretmenler', 'Birebir ve evde ders veren eğitmenler.', '1.670'),
-    ];
-    final columns = _narrow ? 1 : (_wide ? 4 : 2);
-
-    return _maxWidth(
-      Padding(
-        padding: const EdgeInsets.symmetric(vertical: 56),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _sectionHeader('Ne aradığınızı seçin', 'Tüm kategoriler →',
-                onTap: () {
-                  final app = context.read<AppState>();
-                  app.setSearch('');
-                  app.setFilters(clear: true);
-                  Navigator.of(context).push(MaterialPageRoute(
-                      builder: (_) => const SearchResultsScreen()));
-                }),
-            const SizedBox(height: 36),
-            _grid(
-              columns: columns,
-              gap: 24,
-              children: [
-                for (var i = 0; i < cats.length; i++)
-                  InkWell(
-                    onTap: () => _browseCategory(_tabTypes[i]),
-                    child: Container(
-                      padding: const EdgeInsets.only(left: 24, top: 8, bottom: 8),
-                      decoration: const BoxDecoration(
-                        border: Border(
-                            left: BorderSide(color: PusulaColors.border)),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(cats[i].$1,
-                              style: const TextStyle(
-                                  fontFamily: 'monospace',
-                                  fontSize: 12,
-                                  color: PusulaColors.faint)),
-                          const SizedBox(height: 14),
-                          Text(cats[i].$2, style: pusulaHeading(fontSize: 18)),
-                          const SizedBox(height: 6),
-                          Text(cats[i].$3,
-                              style: const TextStyle(
-                                  fontSize: 14,
-                                  color: PusulaColors.muted,
-                                  height: 1.55)),
-                          const SizedBox(height: 12),
-                          Text('${cats[i].$4} ilan',
-                              style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: PusulaColors.primary)),
-                        ],
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ---------- Featured listings (real seed data) ----------
-
-  Widget _featuredListings() {
+  Widget _featured() {
     final providers = context
         .watch<AppState>()
         .providers
         .where((p) => p.status == ListingStatus.published)
-        .take(6)
-        .toList();
+        .toList()
+      ..sort((a, b) => b.avgRating.compareTo(a.avgRating));
+    final top = providers.take(3).toList();
     final columns = _narrow ? 1 : (_wide ? 3 : 2);
 
     return _maxWidth(
       Padding(
-        padding: const EdgeInsets.only(top: 56, bottom: 72),
+        padding: const EdgeInsets.only(bottom: 80),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _sectionHeader('Velilerin en çok incelediği ilanlar', 'Tümünü gör →',
-                onTap: () {
-                  final app = context.read<AppState>();
-                  app.setSearch('');
-                  app.setFilters(clear: true);
-                  Navigator.of(context).push(MaterialPageRoute(
-                      builder: (_) => const SearchResultsScreen()));
-                }),
-            const SizedBox(height: 36),
-            _grid(
-              columns: columns,
-              gap: 32,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                for (final p in providers) _listingCard(p),
+                Expanded(
+                  child: Text('Öne çıkan ilanlar',
+                      style: pusulaHeading(
+                          fontSize: 20, letterSpacingFactor: -0.01)),
+                ),
+                InkWell(
+                  onTap: _openResults,
+                  child: const Text('Tümünü gör →',
+                      style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: PusulaColors.primary)),
+                ),
               ],
             ),
+            const SizedBox(height: 24),
+            LayoutBuilder(builder: (ctx, c) {
+              final w = (c.maxWidth - (columns - 1) * 24) / columns;
+              return Wrap(
+                spacing: 24,
+                runSpacing: 24,
+                children: [
+                  for (final p in top)
+                    SizedBox(width: w, child: _listingCard(p)),
+                ],
+              );
+            }),
           ],
         ),
       ),
@@ -478,719 +384,198 @@ class _LandingScreenState extends State<LandingScreen> {
 
   Widget _listingCard(ProviderProfile p) {
     return InkWell(
+      borderRadius: BorderRadius.circular(14),
       onTap: () => Navigator.of(context).push(
         MaterialPageRoute(
             builder: (_) => ProviderDetailScreen(providerId: p.id)),
       ),
-      borderRadius: BorderRadius.circular(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Stack(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(14),
-                child: p.photoUrls.isEmpty
-                    ? _patternBox(height: 190)
-                    : NetworkPhoto(
-                        url: p.photoUrls.first,
-                        height: 190,
-                        width: double.infinity),
-              ),
-              Positioned(
-                top: 12,
-                left: 12,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: PusulaColors.background.withValues(alpha: 0.92),
-                    border: Border.all(color: PusulaColors.border),
-                    borderRadius: BorderRadius.circular(100),
-                  ),
-                  child: Text(p.badge,
-                      style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: PusulaColors.ink)),
-                ),
-              ),
-              if (p.videoUrl != null)
-                Positioned(
-                  bottom: 12,
-                  right: 12,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(14),
+            child: p.photoUrls.isEmpty
+                ? Container(
+                    height: 170,
+                    width: double.infinity,
                     decoration: BoxDecoration(
-                      color: PusulaColors.ink.withValues(alpha: 0.75),
-                      borderRadius: BorderRadius.circular(100),
+                      color: PusulaColors.patternA,
+                      border: Border.all(color: PusulaColors.border),
+                      borderRadius: BorderRadius.circular(14),
                     ),
-                    child: const Text('▶ Tanıtım',
-                        style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white)),
-                  ),
-                ),
-            ],
+                    child: const Icon(Icons.school_outlined,
+                        color: PusulaColors.faint, size: 32),
+                  )
+                : NetworkPhoto(
+                    url: p.photoUrls.first,
+                    height: 170,
+                    width: double.infinity),
           ),
-          const SizedBox(height: 12),
-          Text('${p.type.labelTr.toUpperCase()} · ${p.city.toUpperCase()}',
-              style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: PusulaColors.faint,
-                  letterSpacing: 0.5)),
-          const SizedBox(height: 6),
+          const SizedBox(height: 10),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: Text(p.name,
                     style: pusulaHeading(
-                        fontSize: 17, height: 1.35, letterSpacingFactor: -0.01)),
+                        fontSize: 16,
+                        height: 1.35,
+                        letterSpacingFactor: -0.01)),
               ),
               const SizedBox(width: 12),
-              Text.rich(
-                TextSpan(
-                  text: '★ ${p.avgRating == 0 ? '—' : p.avgRating.toStringAsFixed(1)} ',
-                  style: const TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.w700),
-                  children: [
-                    TextSpan(
-                      text: '(${p.reviews.length})',
-                      style: const TextStyle(
-                          fontWeight: FontWeight.w400,
-                          color: PusulaColors.faint),
-                    ),
-                  ],
-                ),
+              Text(
+                '★ ${p.avgRating == 0 ? '—' : p.avgRating.toStringAsFixed(1)}',
+                style: const TextStyle(
+                    fontSize: 13, fontWeight: FontWeight.w700),
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           Row(
             children: [
               Expanded(
-                child: Text('${formatPrice(p.monthlyPrice)}/ay başlangıç',
-                    style: const TextStyle(
-                        fontSize: 14, color: PusulaColors.body)),
-              ),
-              const Text('Teklif al →',
-                  style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: PusulaColors.primary)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _patternBox({double? height, double? width}) {
-    return Container(
-      height: height,
-      width: width ?? double.infinity,
-      decoration: BoxDecoration(
-        color: PusulaColors.patternA,
-        border: Border.all(color: PusulaColors.border),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      alignment: Alignment.center,
-      child: const Icon(Icons.school_outlined,
-          color: PusulaColors.faint, size: 32),
-    );
-  }
-
-  // ---------- How it works ----------
-
-  Widget _howItWorks() {
-    const steps = [
-      ('1', 'Ara & Karşılaştır',
-          'İl, seviye ve bütçenize göre filtreleyin. İlanları puanlarıyla yan yana karşılaştırın.'),
-      ('2', 'Teklif Al & Mesajlaş',
-          'Beğendiğiniz kurumlara teklif isteği gönderin, doğrudan mesajlaşarak sorularınızı sorun.'),
-      ('3', 'Değerlendir & Karar Ver',
-          'Gerçek veli yorumlarını okuyun, kararınızı verin ve deneyiminizi puanlayın.'),
-    ];
-
-    return Container(
-      key: _howItWorksKey,
-      width: double.infinity,
-      decoration: const BoxDecoration(
-        color: PusulaColors.surface,
-        border: Border(
-          top: BorderSide(color: PusulaColors.border),
-          bottom: BorderSide(color: PusulaColors.border),
-        ),
-      ),
-      child: Center(
-        child: _maxWidth(
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 80),
-            child: Column(
-              children: [
-                Text('Üç adımda doğru karar',
-                    textAlign: TextAlign.center,
-                    style: pusulaHeading(fontSize: 28)),
-                const SizedBox(height: 48),
-                _grid(
-                  columns: _wide ? 3 : 1,
-                  gap: 48,
-                  children: [
-                    for (final (num, title, desc) in steps)
-                      Column(
-                        children: [
-                          Container(
-                            width: 44,
-                            height: 44,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: PusulaColors.card,
-                              border:
-                                  Border.all(color: PusulaColors.borderDark),
-                            ),
-                            alignment: Alignment.center,
-                            child: Text(num,
-                                style: pusulaHeading(
-                                    fontSize: 15,
-                                    color: PusulaColors.primary)),
-                          ),
-                          const SizedBox(height: 18),
-                          Text(title, style: pusulaHeading(fontSize: 19)),
-                          const SizedBox(height: 10),
-                          ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 300),
-                            child: Text(desc,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                    fontSize: 15,
-                                    color: PusulaColors.body,
-                                    height: 1.65)),
-                          ),
-                        ],
-                      ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ---------- Compare ----------
-
-  Widget _compareSection() {
-    const features = [
-      'Ücret, mesafe, kontenjan ve puanı tek tabloda görün',
-      'İl / ilçe, seviye, branş ve bütçe filtreleri',
-      'Doğrulanmış rozetler ve gerçek veli yorumları',
-      'Kaydettiğiniz ilanları listeleyip paylaşın',
-    ];
-
-    final left = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Yan yana koyun, farkı görün.',
-            style: pusulaHeading(fontSize: 32)),
-        const SizedBox(height: 16),
-        const Text(
-          'Ücret, mesafe, kadro, başarı oranı ve veli puanlarını tek tabloda '
-          'karşılaştırın. Filtrelerle seçenekleri saniyeler içinde daraltın.',
-          style:
-              TextStyle(fontSize: 16, color: PusulaColors.body, height: 1.7),
-        ),
-        const SizedBox(height: 24),
-        for (final f in features)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('—',
-                    style: TextStyle(
-                        color: PusulaColors.primary,
-                        fontWeight: FontWeight.w700)),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(f,
-                      style: const TextStyle(
-                          fontSize: 15,
-                          color: PusulaColors.slate,
-                          height: 1.55)),
-                ),
-              ],
-            ),
-          ),
-      ],
-    );
-
-    final right = Container(
-      padding: const EdgeInsets.all(26),
-      decoration: BoxDecoration(
-        color: PusulaColors.card,
-        border: Border.all(color: PusulaColors.border),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: _compareTable(),
-    );
-
-    return _maxWidth(
-      Padding(
-        padding: const EdgeInsets.symmetric(vertical: 88),
-        child: _wide
-            ? Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(child: left),
-                  const SizedBox(width: 64),
-                  Expanded(flex: 11, child: right),
-                ],
-              )
-            : Column(children: [left, const SizedBox(height: 40), right]),
-      ),
-    );
-  }
-
-  Widget _compareTable() {
-    const rows = [
-      ('Puan', '4.9', '4.7', '4.6', true),
-      ('Aylık ücret', '₺6.500', '₺3.200', '₺2.900', false),
-      ('Mesafe', '2.1 km', '4.8 km', '1.3 km', false),
-      ('Kontenjan', 'Var', 'Dolu', 'Var', false),
-      ('Teklif', '✓', '✓', '✓', true),
-    ];
-    const labelStyle = TextStyle(
-        fontSize: 12,
-        fontWeight: FontWeight.w500,
-        color: PusulaColors.faint);
-    TextStyle cell(bool bold) => TextStyle(
-          fontSize: 13,
-          fontWeight: bold ? FontWeight.w700 : FontWeight.w400,
-          color: bold ? PusulaColors.ink : PusulaColors.body,
-        );
-
-    Widget row(String label, String a, String b, String c, TextStyle s,
-        {bool border = true}) {
-      return Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: border
-            ? const BoxDecoration(
-                border:
-                    Border(top: BorderSide(color: Color(0xFFF1EFEA))))
-            : null,
-        child: Row(
-          children: [
-            Expanded(flex: 13, child: Text(label, style: labelStyle)),
-            Expanded(
-                flex: 10, child: Text(a, style: s, textAlign: TextAlign.center)),
-            Expanded(
-                flex: 10, child: Text(b, style: s, textAlign: TextAlign.center)),
-            Expanded(
-                flex: 10, child: Text(c, style: s, textAlign: TextAlign.center)),
-          ],
-        ),
-      );
-    }
-
-    final head = pusulaHeading(fontSize: 13, letterSpacingFactor: 0);
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: Row(
-            children: [
-              const Expanded(
-                  flex: 13,
-                  child: Text('Karşılaştırma',
-                      style: TextStyle(
-                          fontSize: 12, color: PusulaColors.faint))),
-              Expanded(
-                  flex: 10,
-                  child: Text('Bilge Koleji',
-                      style: head, textAlign: TextAlign.center)),
-              Expanded(
-                  flex: 10,
-                  child: Text('Anadolu Kurs',
-                      style: head, textAlign: TextAlign.center)),
-              Expanded(
-                  flex: 10,
-                  child: Text('Kavram Dershane',
-                      style: head, textAlign: TextAlign.center)),
-            ],
-          ),
-        ),
-        for (final (label, a, b, c, bold) in rows)
-          row(label, a, b, c, cell(bold)),
-      ],
-    );
-  }
-
-  // ---------- Career (closed network) ----------
-
-  Widget _careerSection() {
-    const jobs = [
-      ('Matematik Öğretmeni (LGS)', 'Kavram Dershanesi · Ankara', 'Tam zamanlı'),
-      ('Fen Bilimleri Öğretmeni', 'Bilge Koleji · İstanbul', 'Tam zamanlı'),
-      ('İngilizce Eğitmeni', 'Fluent Akademi · Antalya', 'Yarı zamanlı'),
-    ];
-    const teachers = [
-      ('Merve A.', 'Matematik · 8 yıl', '★ 5.0'),
-      ('Kaan T.', 'Fizik · 5 yıl', '★ 4.8'),
-      ('Selin D.', 'İngilizce · 6 yıl', '★ 4.9'),
-    ];
-
-    Widget listRow(String title, String sub, String trailing) {
-      return Container(
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        decoration: const BoxDecoration(
-          border: Border(top: BorderSide(color: PusulaColors.border)),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.w600, fontSize: 14)),
-                  const SizedBox(height: 2),
-                  Text(sub,
-                      style: const TextStyle(
-                          fontSize: 12, color: PusulaColors.faint)),
-                ],
-              ),
-            ),
-            Text(trailing,
-                style:
-                    const TextStyle(fontSize: 12, color: PusulaColors.body)),
-          ],
-        ),
-      );
-    }
-
-    Widget column(String title, String sub, List<Widget> rows, String cta) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: pusulaHeading(fontSize: 17)),
-          const SizedBox(height: 4),
-          Text(sub,
-              style:
-                  const TextStyle(fontSize: 13, color: PusulaColors.faint)),
-          const SizedBox(height: 18),
-          ...rows,
-          const SizedBox(height: 20),
-          InkWell(
-            onTap: _goToSignIn,
-            child: Text(cta,
-                style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                    color: PusulaColors.primary)),
-          ),
-        ],
-      );
-    }
-
-    final institutions = column(
-      'Kurumlar',
-      'İş ilanı açın, doğrulanmış öğretmen havuzunda arayın.',
-      [for (final (t, s, tr) in jobs) listRow(t, s, tr)],
-      'İş ilanı ver →',
-    );
-    final teachersCol = column(
-      'Öğretmenler',
-      'Profil oluşturun, branşınıza uygun ilanlara gizli başvurun.',
-      [for (final (t, s, tr) in teachers) listRow(t, s, tr)],
-      'Öğretmen profili oluştur →',
-    );
-
-    return _maxWidth(
-      Padding(
-        padding: const EdgeInsets.only(bottom: 88),
-        child: Container(
-          padding: EdgeInsets.all(_narrow ? 28 : 56),
-          decoration: BoxDecoration(
-            color: PusulaColors.card,
-            border: Border.all(color: PusulaColors.border),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('ÖĞRETMEN KARİYERİ · KAPALI AĞ',
-                  style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: PusulaColors.primary,
-                      letterSpacing: 0.72)),
-              const SizedBox(height: 12),
-              Text('Kurumlar ve öğretmenler için özel alan',
-                  style: pusulaHeading(fontSize: 30)),
-              const SizedBox(height: 12),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 620),
-                child: const Text(
-                  'İş ilanlarını yalnızca öğretmenler görür; iş arayan öğretmen '
-                  'profillerini yalnızca öğretmen arayan kurumlar görür. '
-                  'Veli ve öğrencilere kapalıdır.',
-                  style: TextStyle(
-                      fontSize: 16, color: PusulaColors.body, height: 1.65),
-                ),
-              ),
-              const SizedBox(height: 44),
-              _wide
-                  ? Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(child: institutions),
-                        const SizedBox(width: 56),
-                        Expanded(child: teachersCol),
-                      ],
-                    )
-                  : Column(children: [
-                      institutions,
-                      const SizedBox(height: 40),
-                      teachersCol
-                    ]),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ---------- Testimonial / CTA / Footer ----------
-
-  Widget _testimonial() {
-    return Container(
-      constraints: const BoxConstraints(maxWidth: 900),
-      padding: const EdgeInsets.fromLTRB(32, 0, 32, 88),
-      child: Column(
-        children: [
-          Text(
-            '"Üç dershaneyi puanlarına ve ücretlerine göre karşılaştırdım, '
-            'ikisiyle mesajlaştım ve teklif aldım. Bir haftada kararımızı verdik."',
-            textAlign: TextAlign.center,
-            style: pusulaHeading(
-                fontSize: _narrow ? 20 : 26,
-                fontWeight: FontWeight.w600,
-                height: 1.5,
-                letterSpacingFactor: -0.01),
-          ),
-          const SizedBox(height: 22),
-          const Text('Elif Y. — Veli, Ankara · ★ 5.0',
-              style: TextStyle(fontSize: 14, color: PusulaColors.muted)),
-        ],
-      ),
-    );
-  }
-
-  Widget _cta() {
-    return _maxWidth(
-      Padding(
-        padding: const EdgeInsets.symmetric(vertical: 88),
-        child: Column(
-          children: [
-            Text('Doğru eğitime giden yolu bugün bulun.',
-                textAlign: TextAlign.center,
-                style: pusulaHeading(
-                    fontSize: _narrow ? 28 : 38,
-                    fontWeight: FontWeight.w800,
-                    letterSpacingFactor: -0.03)),
-            const SizedBox(height: 14),
-            const Text(
-              "Veli, öğrenci, öğretmen ya da kurum — Pusula Eğitim'e ücretsiz katılın.",
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 17, color: PusulaColors.body),
-            ),
-            const SizedBox(height: 32),
-            Wrap(
-              spacing: 14,
-              runSpacing: 14,
-              alignment: WrapAlignment.center,
-              children: [
-                FilledButton(
-                    onPressed: _openResults,
-                    child: const Text('Aramaya başla')),
-                OutlinedButton(
-                    onPressed: _goToRegister,
-                    child: const Text('İlan / iş ilanı ver')),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _footer() {
-    Widget linkCol(String title, List<String> links,
-        {Map<String, VoidCallback> actions = const {}}) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title,
-              style: const TextStyle(
-                  fontWeight: FontWeight.w600, fontSize: 13)),
-          const SizedBox(height: 14),
-          for (final l in links)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 9),
-              child: InkWell(
-                onTap: actions[l] ?? _goToSignIn,
-                child: Text(l,
+                child: Text('${p.type.labelTr} · ${p.city}',
                     style: const TextStyle(
                         fontSize: 13, color: PusulaColors.muted)),
               ),
-            ),
-        ],
-      );
-    }
-
-    final brand = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            const PusulaLogo(size: 22),
-            const SizedBox(width: 8),
-            Text('Pusula Eğitim', style: pusulaHeading(fontSize: 15)),
-          ],
-        ),
-        const SizedBox(height: 12),
-        const SizedBox(
-          width: 280,
-          child: Text(
-            "Türkiye'nin eğitim pazar yeri. Özel okul, kurs, dershane ve "
-            'özel öğretmeni karşılaştırarak bulun.',
-            style: TextStyle(
-                fontSize: 13, height: 1.6, color: PusulaColors.muted),
-          ),
-        ),
-      ],
-    );
-
-    final cols = [
-      linkCol(
-        'Keşfet',
-        ['Özel okullar', 'Kurslar', 'Dershaneler', 'Özel öğretmenler'],
-        actions: {
-          'Özel okullar': () => _browseCategory(ProviderType.privateSchool),
-          'Kurslar': () => _browseCategory(ProviderType.course),
-          'Dershaneler': () => _browseCategory(ProviderType.dershane),
-          'Özel öğretmenler': () =>
-              _browseCategory(ProviderType.privateTeacher),
-        },
-      ),
-      linkCol(
-        'Kurumlar',
-        ['İlan ver', 'İş ilanı aç', 'Fiyatlandırma', 'Nasıl çalışır'],
-        actions: {'Nasıl çalışır': _scrollToHowItWorks},
-      ),
-      linkCol('Destek', ['Yardım merkezi', 'Güvenlik', 'İletişim', 'KVKK']),
-    ];
-
-    return Container(
-      width: double.infinity,
-      decoration: const BoxDecoration(
-        color: PusulaColors.surface,
-        border: Border(top: BorderSide(color: PusulaColors.border)),
-      ),
-      child: Center(
-        child: _maxWidth(
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(top: 56, bottom: 28),
-                child: _wide
-                    ? Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(flex: 16, child: brand),
-                          for (final c in cols) Expanded(flex: 10, child: c),
-                        ],
-                      )
-                    : Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          brand,
-                          const SizedBox(height: 32),
-                          Wrap(spacing: 48, runSpacing: 32, children: cols),
-                        ],
-                      ),
-              ),
-              const Divider(height: 1),
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 18),
-                child: Wrap(
-                  spacing: 20,
-                  runSpacing: 6,
-                  alignment: WrapAlignment.spaceBetween,
-                  children: const [
-                    Text('© 2026 Pusula Eğitim. Tüm hakları saklıdır.',
-                        style: TextStyle(
-                            fontSize: 12, color: PusulaColors.faint)),
-                    Text("Türkiye'de sevgiyle",
-                        style: TextStyle(
-                            fontSize: 12, color: PusulaColors.faint)),
-                  ],
-                ),
-              ),
+              Text('${formatPrice(p.monthlyPrice)}/ay',
+                  style: const TextStyle(
+                      fontSize: 13, color: PusulaColors.body)),
             ],
           ),
+        ],
+      ),
+    );
+  }
+
+  // ---------- How (3 steps) ----------
+
+  Widget _how() {
+    const steps = [
+      ('01', 'Ara ve karşılaştır', 'Puan, ücret ve mesafeye göre filtreleyin.'),
+      ('02', 'Teklif alın', 'Kurumlarla doğrudan mesajlaşın, teklif isteyin.'),
+      ('03', 'Karar verin', 'Gerçek veli yorumlarıyla güvenle seçin.'),
+    ];
+
+    Widget step((String, String, String) s) => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(s.$1,
+                style: pusulaHeading(
+                    fontSize: 13,
+                    color: PusulaColors.primary,
+                    letterSpacingFactor: 0)),
+            const SizedBox(height: 8),
+            Text(s.$2,
+                style:
+                    pusulaHeading(fontSize: 17, letterSpacingFactor: -0.01)),
+            const SizedBox(height: 6),
+            Text(s.$3,
+                style: const TextStyle(
+                    fontSize: 14, color: PusulaColors.body, height: 1.6)),
+          ],
+        );
+
+    return _maxWidth(
+      Padding(
+        padding: const EdgeInsets.symmetric(vertical: 64),
+        child: _wide
+            ? Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (var i = 0; i < steps.length; i++) ...[
+                    if (i > 0) const SizedBox(width: 40),
+                    Expanded(child: step(steps[i])),
+                  ],
+                ],
+              )
+            : Column(
+                children: [
+                  for (var i = 0; i < steps.length; i++) ...[
+                    if (i > 0) const SizedBox(height: 28),
+                    SizedBox(width: double.infinity, child: step(steps[i])),
+                  ],
+                ],
+              ),
+      ),
+    );
+  }
+
+  // ---------- Career strip ----------
+
+  Widget _careerStrip() {
+    return _maxWidth(
+      Padding(
+        padding: const EdgeInsets.symmetric(vertical: 40),
+        child: Wrap(
+          spacing: 16,
+          runSpacing: 12,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          alignment: WrapAlignment.spaceBetween,
+          children: [
+            Text.rich(
+              TextSpan(
+                text: 'Öğretmen veya kurum musunuz? ',
+                style: pusulaHeading(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    letterSpacingFactor: 0),
+                children: const [
+                  TextSpan(
+                    text:
+                        'İş ilanları yalnızca öğretmenlere, öğretmen profilleri '
+                        'yalnızca kurumlara açık.',
+                    style: TextStyle(
+                        fontFamily: 'Public Sans',
+                        fontWeight: FontWeight.w400,
+                        fontSize: 15,
+                        color: PusulaColors.slate),
+                  ),
+                ],
+              ),
+            ),
+            InkWell(
+              onTap: _goToSignIn,
+              child: const Text('Öğretmen kariyeri →',
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: PusulaColors.primary)),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  // ---------- Helpers ----------
+  // ---------- Footer ----------
 
-  Widget _sectionHeader(String title, String action, {VoidCallback? onTap}) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Expanded(child: Text(title, style: pusulaHeading(fontSize: 28))),
-        InkWell(
-          onTap: onTap ?? _goToSignIn,
-          child: Text(action,
-              style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: PusulaColors.primary)),
+  Widget _footer() {
+    return _maxWidth(
+      Padding(
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        child: Wrap(
+          spacing: 20,
+          runSpacing: 8,
+          alignment: WrapAlignment.spaceBetween,
+          children: [
+            const Text('© 2026 Pusula Eğitim',
+                style: TextStyle(fontSize: 13, color: PusulaColors.faint)),
+            Wrap(
+              spacing: 20,
+              children: [
+                for (final label in const ['Yardım', 'Güvenlik', 'KVKK'])
+                  InkWell(
+                    onTap: () => _comingSoon(label),
+                    child: Text(label,
+                        style: const TextStyle(
+                            fontSize: 13, color: PusulaColors.faint)),
+                  ),
+              ],
+            ),
+          ],
         ),
-      ],
+      ),
     );
-  }
-
-  Widget _grid({
-    required int columns,
-    required double gap,
-    required List<Widget> children,
-  }) {
-    final rows = <Widget>[];
-    for (var i = 0; i < children.length; i += columns) {
-      final rowChildren = <Widget>[];
-      for (var j = 0; j < columns; j++) {
-        if (j > 0) rowChildren.add(SizedBox(width: gap));
-        rowChildren.add(Expanded(
-          child: i + j < children.length
-              ? children[i + j]
-              : const SizedBox.shrink(),
-        ));
-      }
-      if (i > 0) rows.add(SizedBox(height: gap));
-      rows.add(Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: rowChildren));
-    }
-    return Column(children: rows);
   }
 }
