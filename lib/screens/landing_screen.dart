@@ -6,6 +6,7 @@ import '../state/app_state.dart';
 import '../theme/pusula_theme.dart';
 import '../widgets/common.dart';
 import 'browse_screen.dart';
+import 'compare_screen.dart';
 import 'login_screen.dart';
 import 'provider_detail_screen.dart';
 
@@ -28,6 +29,7 @@ class _SearchTab {
 class _LandingScreenState extends State<LandingScreen> {
   int _activeTab = 0;
   final _searchController = TextEditingController();
+  final _howItWorksKey = GlobalKey();
 
   static const _tabs = [
     _SearchTab('Özel Okul', 'Örn. bilim koleji, İngilizce ağırlıklı'),
@@ -74,6 +76,30 @@ class _LandingScreenState extends State<LandingScreen> {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const SearchResultsScreen()),
     );
+  }
+
+  /// "Keşfet" style links: open the guest results page unfiltered.
+  void _openResults() {
+    final app = context.read<AppState>();
+    app.setSearch('');
+    app.setFilters(clear: true);
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const SearchResultsScreen()),
+    );
+  }
+
+  void _openCompare() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const CompareScreen()),
+    );
+  }
+
+  void _scrollToHowItWorks() {
+    final ctx = _howItWorksKey.currentContext;
+    if (ctx != null) {
+      Scrollable.ensureVisible(ctx,
+          duration: const Duration(milliseconds: 450), curve: Curves.easeOut);
+    }
   }
 
   bool get _wide => MediaQuery.of(context).size.width >= 980;
@@ -141,16 +167,17 @@ class _LandingScreenState extends State<LandingScreen> {
                     style: pusulaHeading(fontSize: 17, letterSpacingFactor: -0.01)),
                 const Spacer(),
                 if (_wide) ...[
-                  for (final link in const [
-                    'Nasıl çalışır',
-                    'Keşfet',
-                    'Karşılaştır',
-                    'Öğretmen kariyeri'
+                  for (final (link, onTap) in [
+                    ('Nasıl çalışır', _scrollToHowItWorks),
+                    ('Keşfet', _openResults),
+                    ('Karşılaştır', _openCompare),
+                    // Career area is the closed network — account required.
+                    ('Öğretmen kariyeri', _goToSignIn),
                   ])
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 13),
                       child: InkWell(
-                        onTap: _goToSignIn,
+                        onTap: onTap,
                         child: Text(link,
                             style: const TextStyle(
                                 fontSize: 14, color: PusulaColors.body)),
@@ -583,6 +610,7 @@ class _LandingScreenState extends State<LandingScreen> {
     ];
 
     return Container(
+      key: _howItWorksKey,
       width: double.infinity,
       decoration: const BoxDecoration(
         color: PusulaColors.surface,
@@ -982,7 +1010,7 @@ class _LandingScreenState extends State<LandingScreen> {
               alignment: WrapAlignment.center,
               children: [
                 FilledButton(
-                    onPressed: _goToSignIn,
+                    onPressed: _openResults,
                     child: const Text('Aramaya başla')),
                 OutlinedButton(
                     onPressed: _goToSignIn,
@@ -996,7 +1024,8 @@ class _LandingScreenState extends State<LandingScreen> {
   }
 
   Widget _footer() {
-    Widget linkCol(String title, List<String> links) {
+    Widget linkCol(String title, List<String> links,
+        {Map<String, VoidCallback> actions = const {}}) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1008,7 +1037,7 @@ class _LandingScreenState extends State<LandingScreen> {
             Padding(
               padding: const EdgeInsets.only(bottom: 9),
               child: InkWell(
-                onTap: _goToSignIn,
+                onTap: actions[l] ?? _goToSignIn,
                 child: Text(l,
                     style: const TextStyle(
                         fontSize: 13, color: PusulaColors.muted)),
@@ -1042,10 +1071,22 @@ class _LandingScreenState extends State<LandingScreen> {
     );
 
     final cols = [
-      linkCol('Keşfet',
-          ['Özel okullar', 'Kurslar', 'Dershaneler', 'Özel öğretmenler']),
-      linkCol('Kurumlar',
-          ['İlan ver', 'İş ilanı aç', 'Fiyatlandırma', 'Nasıl çalışır']),
+      linkCol(
+        'Keşfet',
+        ['Özel okullar', 'Kurslar', 'Dershaneler', 'Özel öğretmenler'],
+        actions: {
+          'Özel okullar': () => _browseCategory(ProviderType.privateSchool),
+          'Kurslar': () => _browseCategory(ProviderType.course),
+          'Dershaneler': () => _browseCategory(ProviderType.dershane),
+          'Özel öğretmenler': () =>
+              _browseCategory(ProviderType.privateTeacher),
+        },
+      ),
+      linkCol(
+        'Kurumlar',
+        ['İlan ver', 'İş ilanı aç', 'Fiyatlandırma', 'Nasıl çalışır'],
+        actions: {'Nasıl çalışır': _scrollToHowItWorks},
+      ),
       linkCol('Destek', ['Yardım merkezi', 'Güvenlik', 'İletişim', 'KVKK']),
     ];
 

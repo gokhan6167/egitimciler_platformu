@@ -56,3 +56,12 @@
   (yeni kurum kullanıcıları + ilan profilleri + yorumlar).
 - [x] 11/11 test geçti (yeni: TR arama testi + misafir arama widget testi),
   analyze temiz, Vercel yeniden deploy edildi.
+
+## 2026-07-16 — Tam misafir gezinme
+- Kural: ziyaretçi üyeliksiz her yeri gezer (arama, ilan detayları,
+  karşılaştırma); giriş SADECE ilan verme/düzenleme, mesajlaşma, teklif ve
+  puan verme için istenir (_requireLogin).
+- [x] Landing navbar: Keşfet → sonuçlar, Karşılaştır → CompareScreen,
+  Nasıl çalışır → bölüme kaydırma; Öğretmen kariyeri → giriş (kapalı ağ).
+- [x] CTA "Aramaya başla" ve footer Keşfet linkleri girişsiz kategori
+  sonuçlarına gider.
