@@ -466,8 +466,10 @@ class _LandingScreenState extends State<LandingScreen> {
                         fontSize: 13, color: PusulaColors.muted)),
               ),
               Text(
-                '${formatPrice(p.monthlyPrice)}'
-                '${p.type == ProviderType.privateTeacher ? '/ders' : '/ay'}',
+                p.type == ProviderType.privateTeacher && p.lessonPrice != null
+                    ? '${_tlAmount(p.lessonPrice!)}/ders'
+                    : '${formatPrice(p.monthlyPrice)}'
+                        '${p.type == ProviderType.privateTeacher ? '/ders' : '/ay'}',
                 style: const TextStyle(
                     fontSize: 13, color: PusulaColors.body),
               ),
@@ -475,6 +477,17 @@ class _LandingScreenState extends State<LandingScreen> {
           ),
         ],
     );
+  }
+
+  /// "₺1.500" — TL amount with dot thousands separators (design format).
+  static String _tlAmount(double value) {
+    final t = value.round().toString();
+    final sb = StringBuffer('₺');
+    for (var i = 0; i < t.length; i++) {
+      if (i > 0 && (t.length - i) % 3 == 0) sb.write('.');
+      sb.write(t[i]);
+    }
+    return sb.toString();
   }
 
   // ---------- How (3 steps) ----------

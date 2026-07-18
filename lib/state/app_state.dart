@@ -48,6 +48,7 @@ class AppState extends ChangeNotifier {
     required UserRole role,
     String city = '',
     String subject = '',
+    String email = '',
     ProviderType providerType = ProviderType.course,
   }) {
     final id = _newId('u');
@@ -74,6 +75,8 @@ class AppState extends ChangeNotifier {
       role: role,
       city: city,
       subject: subject,
+      email: email,
+      joinedAt: DateTime.now(),
       providerId: providerId,
       seekingJob: role == UserRole.teacher,
     );
@@ -378,16 +381,30 @@ class AppState extends ChangeNotifier {
       }
 
       hay ??= _facetHaystack(p);
-      final anyOption = selected.any((option) {
-        // "Kodlama & Robotik" matches if any meaningful word matches.
-        return _fold(option)
-            .split(RegExp(r'[^a-z0-9]+'))
-            .where((w) => w.length >= 3)
-            .any(hay!.contains);
-      });
+      final anyOption = selected.any((option) => _optionMatches(hay!, option));
       if (!anyOption) return false;
     }
     return true;
+  }
+
+  /// "Kodlama & Robotik" matches if any meaningful word matches.
+  static bool _optionMatches(String hay, String option) => _fold(option)
+      .split(RegExp(r'[^a-z0-9]+'))
+      .where((w) => w.length >= 3)
+      .any(hay.contains);
+
+  /// How many published listings of [type] a facet option matches —
+  /// shown next to checkbox options like the counts in the design.
+  int facetOptionCount(ProviderType type, FilterSection section, String option) {
+    return providers.where((p) {
+      if (p.status != ListingStatus.published || p.type != type) return false;
+      if (section.id == 'experience') {
+        final years = userById(p.ownerUserId)?.experienceYears ?? 0;
+        final wanted = int.tryParse(option.split('+').first.trim()) ?? 0;
+        return years >= wanted;
+      }
+      return _optionMatches(_facetHaystack(p), option);
+    }).length;
   }
 
   // ---------- Compare ----------

@@ -686,7 +686,8 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             ],
           ),
           Text(
-            '${section.kind.labelTr}${section.active ? '' : ' · şu an gizli'}',
+            '${section.subtitle.isNotEmpty ? section.subtitle : section.kind.labelTr}'
+            '${section.active ? '' : ' · şu an gizli'}',
             style: const TextStyle(fontSize: 12, color: PusulaColors.faint),
           ),
           const SizedBox(height: 16),
@@ -927,6 +928,16 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
 
   // ---------- 4. Kullanıcılar ----------
 
+  /// "12 Oca 2026" style short Turkish date for the user table.
+  static String _joinDate(DateTime? d) {
+    if (d == null) return '—';
+    const months = [
+      'Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz',
+      'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara',
+    ];
+    return '${d.day} ${months[d.month - 1]} ${d.year}';
+  }
+
   Widget _users(AppState app) {
     final counts = <UserRole, int>{};
     for (final u in app.users) {
@@ -966,7 +977,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
           child: Column(
             children: [
               _tableHeader(
-                  const ['KULLANICI', 'ROL', 'ŞEHİR', 'DURUM', 'İŞLEM']),
+                  const ['KULLANICI', 'ROL', 'KAYIT TARİHİ', 'DURUM', 'İŞLEM']),
               for (final u in app.users.where((u) => u.role != UserRole.admin))
                 _tableRow([
                   Row(
@@ -989,11 +1000,24 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                       ),
                       const SizedBox(width: 10),
                       Expanded(
-                        child: Text(u.name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                                fontSize: 14, fontWeight: FontWeight.w600)),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(u.name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600)),
+                            if (u.email.isNotEmpty)
+                              Text(u.email,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                      fontSize: 12,
+                                      color: PusulaColors.faint)),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -1014,7 +1038,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                               color: fg)),
                     );
                   }),
-                  Text(u.city.isEmpty ? '—' : u.city,
+                  Text(_joinDate(u.joinedAt),
                       style: const TextStyle(
                           fontSize: 13, color: PusulaColors.body)),
                   _chip(u.suspended ? 'Askıda' : 'Aktif',

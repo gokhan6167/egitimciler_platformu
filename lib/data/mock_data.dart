@@ -5,6 +5,24 @@ import '../models/models.dart';
 
 String _pic(int seed) => 'https://picsum.photos/seed/edu$seed/640/360';
 
+/// Demo e-mail derived from the user's name (TR chars folded to ASCII).
+String _emailFor(AppUser u) {
+  const map = {
+    'ı': 'i', 'ç': 'c', 'ğ': 'g', 'ö': 'o', 'ş': 's', 'ü': 'u',
+    'İ': 'i', 'Ç': 'c', 'Ğ': 'g', 'Ö': 'o', 'Ş': 's', 'Ü': 'u',
+  };
+  final slug = u.name
+      .split('')
+      .map((c) => map[c] ?? c.toLowerCase())
+      .join()
+      .replaceAll(RegExp(r'[^a-z0-9 ]'), '')
+      .trim()
+      .replaceAll(RegExp(r'\s+'), '.');
+  return u.role == UserRole.institution
+      ? 'info@${slug.replaceAll('.', '')}.com'
+      : '$slug@eposta.com';
+}
+
 /// Fresh copies each call so AppState instances don't share mutable state.
 /// Sections mirror the type-specific "Arama - *" Claude Design files;
 /// admins can add/remove sections and options at runtime.
@@ -13,12 +31,14 @@ List<SearchPageConfig> buildSearchConfigs() => [
         FilterSection(
           id: 'kademe',
           title: 'Kademe',
+          subtitle: 'Özel okul arama sayfasındaki kademe filtresi',
           kind: FilterKind.checkbox,
           options: ['Anaokulu', 'İlkokul', 'Ortaokul', 'Lise'],
         ),
         FilterSection(
           id: 'olanaklar',
           title: 'Olanaklar',
+          subtitle: 'Kampüs ve program olanakları',
           kind: FilterKind.checkbox,
           options: [
             'Servis',
@@ -34,6 +54,7 @@ List<SearchPageConfig> buildSearchConfigs() => [
         FilterSection(
           id: 'alan',
           title: 'Kurs alanı',
+          subtitle: 'Kurs arama sayfasındaki alan filtresi',
           kind: FilterKind.checkbox,
           options: [
             'Kodlama & Robotik',
@@ -47,12 +68,14 @@ List<SearchPageConfig> buildSearchConfigs() => [
         FilterSection(
           id: 'yas',
           title: 'Yaş grubu',
+          subtitle: 'Hedef yaş aralıkları',
           kind: FilterKind.checkbox,
           options: ['4–6 yaş', '7–10 yaş', '11–14 yaş', '15+ / yetişkin'],
         ),
         FilterSection(
           id: 'gun',
           title: 'Gün',
+          subtitle: 'Ders günü seçenekleri',
           kind: FilterKind.pills,
           options: ['Hafta içi', 'Hafta sonu', 'Akşam'],
         ),
@@ -61,12 +84,14 @@ List<SearchPageConfig> buildSearchConfigs() => [
         FilterSection(
           id: 'program',
           title: 'Hazırlık programı',
+          subtitle: 'Dershane arama sayfasındaki program filtresi',
           kind: FilterKind.checkbox,
           options: ['LGS hazırlık', 'YKS (TYT–AYT)', 'Ara sınıf takviye', 'Etüt merkezi'],
         ),
         FilterSection(
           id: 'olanaklar',
           title: 'Olanaklar',
+          subtitle: 'Dershane olanakları',
           kind: FilterKind.checkbox,
           options: [
             'Deneme Sınavı',
@@ -81,6 +106,7 @@ List<SearchPageConfig> buildSearchConfigs() => [
         FilterSection(
           id: 'brans',
           title: 'Branş',
+          subtitle: 'Öğretmen arama sayfasındaki branş filtresi',
           kind: FilterKind.checkbox,
           options: [
             'Matematik',
@@ -94,18 +120,21 @@ List<SearchPageConfig> buildSearchConfigs() => [
         FilterSection(
           id: 'seviye',
           title: 'Seviye',
+          subtitle: 'Öğrenci seviyesi',
           kind: FilterKind.checkbox,
           options: ['İlkokul (1–4)', 'Ortaokul (5–8)', 'Lise (9–12)', 'LGS / YKS hazırlık'],
         ),
         FilterSection(
           id: 'sekil',
           title: 'Ders şekli',
+          subtitle: 'Ders verilebilen ortamlar',
           kind: FilterKind.radio,
           options: ['Evde ders', 'Online'],
         ),
         FilterSection(
           id: 'experience',
           title: 'Deneyim',
+          subtitle: 'Minimum deneyim yılı',
           kind: FilterKind.pills,
           options: ['3+ yıl', '5+ yıl', '10+ yıl'],
         ),
@@ -304,7 +333,11 @@ final List<AppUser> seedUsers = [
     bio: 'Enstrüman ve şan eğitimi, sahne deneyimi.',
     providerId: 'p_kurs5',
   ),
-];
+]..asMap().forEach((i, u) {
+    u.email = _emailFor(u);
+    // Staggered demo registration dates for the admin user table.
+    u.joinedAt = DateTime(2025, 11, 2).add(Duration(days: i * 9));
+  });
 
 /// Card badges per listing id, mirroring the design's variety.
 const Map<String, String> _badges = {
@@ -332,6 +365,8 @@ final List<ProviderProfile> seedProviders = [
     monthlyPrice: 25000,
     photoUrls: [_pic(11), _pic(12), _pic(13), _pic(14), _pic(15)],
     videoUrl: 'https://example.com/video/bilge-koleji-tanitim.mp4',
+    videoDuration: '1:20',
+    address: 'Caferağa Mah. Eğitim Sk. No:12',
     features: ['Servis', 'Yemek', 'Yüzme Havuzu', 'Yabancı Dil Ağırlıklı', 'Rehberlik'],
     highlight: '2026–27 kontenjanı: son 8 kişi',
     programs: const [
@@ -385,6 +420,9 @@ final List<ProviderProfile> seedProviders = [
     monthlyPrice: 8000,
     photoUrls: [_pic(21), _pic(22), _pic(23), _pic(24)],
     videoUrl: 'https://example.com/video/zirve-tanitim.mp4',
+    videoDuration: '0:48',
+    address: 'Kızılay Mah. Ders Cd. No:34',
+    trialLesson: true,
     features: ['Deneme Sınavı', 'Birebir Etüt', 'Koçluk', 'Online Takip'],
     highlight: 'Ücretsiz deneme dersi + seviye sınavı',
     programs: const [
@@ -440,6 +478,7 @@ final List<ProviderProfile> seedProviders = [
         've konuşma kulübü.',
     monthlyPrice: 4500,
     photoUrls: [_pic(31), _pic(32)],
+    address: 'Alsancak Mah. Kıbrıs Şehitleri Cd. No:21',
     features: ['Yabancı Eğitmen', 'Küçük Grup', 'Konuşma Kulübü', 'Sertifika'],
     reviews: [
       Review(
@@ -462,8 +501,11 @@ final List<ProviderProfile> seedProviders = [
         '10 yıllık deneyimli matematik öğretmeni. LGS ve YKS hazırlık uzmanı. '
         'Birebir veya 2 kişilik grup dersleri, online seçeneği mevcut.',
     monthlyPrice: 6000,
+    lessonPrice: 1500,
+    trialLesson: true,
     photoUrls: [_pic(41)],
     videoUrl: 'https://example.com/video/zeynep-tanitim.mp4',
+    videoDuration: '0:35',
     features: ['Birebir Ders', 'Online Ders', 'LGS', 'YKS', 'Seviye Tespiti'],
     highlight: 'İlk ders %50 indirimli · seviye tespiti dahil',
     credentials: const [
@@ -520,6 +562,7 @@ final List<ProviderProfile> seedProviders = [
         'Cambridge sertifikalı İngilizce öğretmeni. Konuşma odaklı, oyunlaştırılmış dersler. '
         'Çocuk ve yetişkin grupları.',
     monthlyPrice: 5000,
+    lessonPrice: 1200,
     photoUrls: [_pic(51)],
     features: ['Konuşma Odaklı', 'Online Ders', 'Sertifikalı'],
     reviews: [],
@@ -536,6 +579,7 @@ final List<ProviderProfile> seedProviders = [
         'TÜBİTAK proje koçluğu. 16 kişilik sınıflar.',
     monthlyPrice: 22000,
     photoUrls: [_pic(71), _pic(72), _pic(73)],
+    address: 'Çankaya Mah. Bilim Sk. No:5',
     features: ['Servis', 'Yemek', 'Robotik Lab', 'Proje Koçluğu'],
     highlight: 'Burs sınavı: 15 Ağustos',
     reviews: [
@@ -630,6 +674,8 @@ final List<ProviderProfile> seedProviders = [
         'veli bilgilendirme sistemi.',
     monthlyPrice: 9000,
     photoUrls: [_pic(81), _pic(82)],
+    address: 'Merkez Mah. Başarı Sk. No:8',
+    trialLesson: true,
     features: ['Küçük Sınıf', 'Birebir Etüt', 'Veli Takip', 'Deneme Sınavı'],
     highlight: 'Erken kayıtta %15 indirim',
     reviews: [
@@ -654,6 +700,7 @@ final List<ProviderProfile> seedProviders = [
         'birebir koçluk görüşmesi.',
     monthlyPrice: 7500,
     photoUrls: [_pic(83), _pic(84)],
+    trialLesson: true,
     features: ['Koçluk', 'Deneme Sınavı', 'Online Takip'],
     reviews: [
       Review(
@@ -726,6 +773,7 @@ final List<ProviderProfile> seedProviders = [
         'müfredatı; yıl sonu proje sergisi.',
     monthlyPrice: 3500,
     photoUrls: [_pic(91), _pic(92)],
+    trialLesson: true,
     features: ['Scratch', 'Python', 'Arduino', 'Proje Sergisi'],
     highlight: 'İlk hafta ücretsiz deneme',
     reviews: [
@@ -818,6 +866,8 @@ final List<ProviderProfile> seedProviders = [
     city: 'İzmir',
     description: 'ODTÜ mezunu fizik öğretmeni. Kavram temelli öğretim, bol deney ve simülasyon.',
     monthlyPrice: 4000,
+    lessonPrice: 1000,
+    trialLesson: true,
     photoUrls: [_pic(61)],
     features: ['Birebir Ders', 'AYT Fizik', 'Deneyle Öğrenme'],
     reviews: [
@@ -858,6 +908,7 @@ final List<ProviderProfile> _pendingProviders = [
     city: 'Bursa',
     description: '7 yıl deneyimli fizik öğretmeni; AYT fizik ve okula destek.',
     monthlyPrice: 4500,
+    lessonPrice: 1100,
     photoUrls: [_pic(97)],
     features: ['Birebir Ders', 'AYT Fizik'],
   )..status = ListingStatus.pending,

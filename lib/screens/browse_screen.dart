@@ -83,6 +83,9 @@ class _BrowseScreenState extends State<BrowseScreen> {
   /// toggle really filters (badge == Doğrulanmış). Local view state.
   bool _verifiedOnly = false;
 
+  /// Design: "Deneme dersi sunanlar" toggle — filters on trialLesson.
+  bool _trialOnly = false;
+
   /// Design: sidebar "Ara" button shows "Aranıyor…" for 600 ms.
   bool _searching = false;
 
@@ -327,6 +330,9 @@ class _BrowseScreenState extends State<BrowseScreen> {
     if (_verifiedOnly) {
       visible = visible.where((p) => p.badge == 'Doğrulanmış').toList();
     }
+    if (_trialOnly) {
+      visible = visible.where((p) => p.trialLesson).toList();
+    }
     final list = _sorted(visible);
     final wide = MediaQuery.of(context).size.width >= 980;
 
@@ -525,6 +531,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
                 setState(() {
                   _sort = 0;
                   _verifiedOnly = false;
+                  _trialOnly = false;
                 });
               },
               child: const Text('Temizle',
@@ -651,12 +658,21 @@ class _BrowseScreenState extends State<BrowseScreen> {
           decoration: const BoxDecoration(
             border: Border(top: BorderSide(color: PusulaColors.border)),
           ),
-          child: _checkRow(
-            app.filterType == ProviderType.privateTeacher
-                ? 'Belgeleri doğrulanmış'
-                : 'Yalnızca doğrulanmış kurumlar',
-            _verifiedOnly,
-            () => setState(() => _verifiedOnly = !_verifiedOnly),
+          child: Column(
+            children: [
+              _checkRow(
+                app.filterType == ProviderType.privateTeacher
+                    ? 'Belgeleri doğrulanmış'
+                    : 'Yalnızca doğrulanmış kurumlar',
+                _verifiedOnly,
+                () => setState(() => _verifiedOnly = !_verifiedOnly),
+              ),
+              _checkRow(
+                'Deneme dersi sunanlar',
+                _trialOnly,
+                () => setState(() => _trialOnly = !_trialOnly),
+              ),
+            ],
           ),
         ),
         Container(
@@ -740,7 +756,8 @@ class _BrowseScreenState extends State<BrowseScreen> {
         return _section(s.title, [
           for (final o in s.options)
             _checkRow(o, selected.contains(o),
-                () => app.toggleFacet(type, s, o)),
+                () => app.toggleFacet(type, s, o),
+                count: app.facetOptionCount(type, s, o)),
         ]);
       case FilterKind.radio:
         return _section(s.title, [
@@ -769,7 +786,8 @@ class _BrowseScreenState extends State<BrowseScreen> {
     }
   }
 
-  Widget _checkRow(String label, bool selected, VoidCallback onTap) {
+  Widget _checkRow(String label, bool selected, VoidCallback onTap,
+      {int? count}) {
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -798,6 +816,10 @@ class _BrowseScreenState extends State<BrowseScreen> {
                   style: const TextStyle(
                       fontSize: 14, color: PusulaColors.slate)),
             ),
+            if (count != null)
+              Text('$count',
+                  style: const TextStyle(
+                      fontSize: 12, color: PusulaColors.faint)),
           ],
         ),
       ),
@@ -1050,6 +1072,8 @@ class _BrowseScreenState extends State<BrowseScreen> {
                 ? 'Belgeli'
                 : 'Doğrulanmış',
             () => setState(() => _verifiedOnly = false)),
+      if (_trialOnly)
+        chip('Deneme dersi', () => setState(() => _trialOnly = false)),
       if (app.filterMinRating > 0)
         chip('★ ${app.filterMinRating.toStringAsFixed(1)}+',
             () => _setRating(app, 0)),
@@ -1151,8 +1175,11 @@ class _BrowseScreenState extends State<BrowseScreen> {
                             color: PusulaColors.ink.withValues(alpha: 0.75),
                             borderRadius: BorderRadius.circular(100),
                           ),
-                          child: const Text('▶ Tanıtım',
-                              style: TextStyle(
+                          child: Text(
+                              p.videoDuration == null
+                                  ? '▶ Tanıtım'
+                                  : '▶ ${p.videoDuration}',
+                              style: const TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
                                   color: Colors.white)),
@@ -1256,13 +1283,37 @@ class _BrowseScreenState extends State<BrowseScreen> {
                     ),
                     child: Row(
                       children: [
-                        Text(_tl(p.monthlyPrice),
+                        Text(
+                            _tl(isTeacher && p.lessonPrice != null
+                                ? p.lessonPrice!
+                                : p.monthlyPrice),
                             style: pusulaHeading(
                                 fontSize: 18, fontWeight: FontWeight.w800)),
                         const SizedBox(width: 5),
-                        Text(isTeacher ? '/ay' : '/ay başlangıç',
+                        Text(
+                            isTeacher
+                                ? (p.lessonPrice != null
+                                    ? '/ders (60 dk)'
+                                    : '/ay')
+                                : '/ay başlangıç',
                             style: const TextStyle(
                                 fontSize: 13, color: PusulaColors.faint)),
+                        if (p.trialLesson) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: PusulaColors.primarySoft,
+                              borderRadius: BorderRadius.circular(100),
+                            ),
+                            child: const Text('Deneme dersi',
+                                style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: PusulaColors.primaryDark)),
+                          ),
+                        ],
                         const Spacer(),
                         if (canCompare)
                           TextButton(

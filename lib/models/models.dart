@@ -64,11 +64,17 @@ class FilterSection {
     required this.id,
     required this.title,
     required this.kind,
+    this.subtitle = '',
     List<String>? options,
   }) : options = options ?? [];
 
   final String id;
   String title;
+
+  /// Short admin-panel description, e.g. "Özel okul arama sayfasındaki
+  /// kademe filtresi" (from the Admin Panel design).
+  String subtitle;
+
   FilterKind kind;
   final List<String> options;
 
@@ -102,6 +108,8 @@ class AppUser {
     this.city = '',
     this.bio = '',
     this.subject = '',
+    this.email = '',
+    this.joinedAt,
     this.providerId,
     this.seekingJob = false,
     this.experienceYears = 0,
@@ -112,6 +120,12 @@ class AppUser {
   final UserRole role;
   String city;
   String bio;
+
+  /// Contact e-mail shown in the admin user table.
+  String email;
+
+  /// Registration date shown in the admin user table.
+  DateTime? joinedAt;
 
   /// Teacher-specific: branch/subject taught.
   String subject;
@@ -193,6 +207,10 @@ class ProviderProfile {
     required this.monthlyPrice,
     List<String>? photoUrls,
     this.videoUrl,
+    this.videoDuration,
+    this.address,
+    this.lessonPrice,
+    this.trialLesson = false,
     List<String>? features,
     List<Review>? reviews,
     List<ProgramItem>? programs,
@@ -226,6 +244,19 @@ class ProviderProfile {
 
   /// Short intro video URL (played via placeholder player in MVP).
   String? videoUrl;
+
+  /// Video length shown on the badge, e.g. "1:20".
+  String? videoDuration;
+
+  /// Street address line for the location card (city is separate).
+  String? address;
+
+  /// Teacher-specific: per-lesson price (60 min), shown as "/ders (60 dk)".
+  double? lessonPrice;
+
+  /// Offers a free/discounted trial lesson ("Deneme dersi" badge + filter).
+  bool trialLesson;
+
   final List<String> features;
   final List<Review> reviews;
   final List<ProgramItem> programs;

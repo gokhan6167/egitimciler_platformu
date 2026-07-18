@@ -289,8 +289,11 @@ class ProviderDetailScreen extends StatelessWidget {
                   color: PusulaColors.ink.withValues(alpha: 0.78),
                   borderRadius: BorderRadius.circular(100),
                 ),
-                child: const Text('▶ Tanıtım videosu',
-                    style: TextStyle(
+                child: Text(
+                    p.videoDuration == null
+                        ? '▶ Tanıtım videosu'
+                        : '▶ Tanıtım videosu · ${p.videoDuration}',
+                    style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: Colors.white)),
@@ -553,8 +556,11 @@ class ProviderDetailScreen extends StatelessWidget {
                   color: Colors.white, size: 28),
             ),
             const SizedBox(height: 10),
-            const Text('Tanışma videosu',
-                style: TextStyle(
+            Text(
+                p.videoDuration == null
+                    ? 'Tanışma videosu'
+                    : 'Tanışma videosu · ${p.videoDuration}',
+                style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: PusulaColors.body)),
@@ -1106,6 +1112,17 @@ class ProviderDetailScreen extends StatelessWidget {
 
   // ---------- Sidebar ----------
 
+  /// "₺1.500" — the design's price format with dotted thousands.
+  static String _tl(double v) {
+    final t = v.round().toString();
+    final sb = StringBuffer('₺');
+    for (var i = 0; i < t.length; i++) {
+      if (i > 0 && (t.length - i) % 3 == 0) sb.write('.');
+      sb.write(t[i]);
+    }
+    return sb.toString();
+  }
+
   Widget _sidebar(BuildContext context, AppState app, ProviderProfile p,
       AppUser? user, bool isOwner, AppUser? owner) {
     final inCompare = app.isInCompare(p.id);
@@ -1126,25 +1143,52 @@ class ProviderDetailScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('başlangıç',
-                  style:
-                      TextStyle(fontSize: 13, color: PusulaColors.faint)),
+              // Teachers with a per-lesson price show it like the design
+              // ("ders ücreti" + ₺550 /ders (60 dk)); others stay monthly.
+              Text(
+                  isTeacher && p.lessonPrice != null
+                      ? 'ders ücreti'
+                      : 'başlangıç',
+                  style: const TextStyle(
+                      fontSize: 13, color: PusulaColors.faint)),
               const SizedBox(height: 2),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(formatPrice(p.monthlyPrice),
+                  Text(
+                      isTeacher && p.lessonPrice != null
+                          ? _tl(p.lessonPrice!)
+                          : formatPrice(p.monthlyPrice),
                       style: pusulaHeading(
                           fontSize: 30, fontWeight: FontWeight.w800)),
                   const SizedBox(width: 6),
-                  const Padding(
-                    padding: EdgeInsets.only(bottom: 4),
-                    child: Text('/ay',
-                        style: TextStyle(
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Text(
+                        isTeacher && p.lessonPrice != null
+                            ? '/ders (60 dk)'
+                            : '/ay',
+                        style: const TextStyle(
                             fontSize: 14, color: PusulaColors.body)),
                   ),
                 ],
               ),
+              if (p.trialLesson) ...[
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: PusulaColors.primarySoft,
+                    borderRadius: BorderRadius.circular(100),
+                  ),
+                  child: const Text('Deneme dersi',
+                      style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: PusulaColors.primaryDark)),
+                ),
+              ],
               if (p.highlight != null) ...[
                 const SizedBox(height: 4),
                 Text(p.highlight!,
@@ -1335,7 +1379,7 @@ class ProviderDetailScreen extends StatelessWidget {
                     color: PusulaColors.faint, size: 32),
               ),
               const SizedBox(height: 12),
-              Text(p.city,
+              Text(p.address == null ? p.city : '${p.address}\n${p.city}',
                   style: const TextStyle(
                       fontSize: 13,
                       color: PusulaColors.body,

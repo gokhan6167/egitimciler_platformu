@@ -152,6 +152,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ? UserRole.institution
               : (_isTeacher ? UserRole.teacher : UserRole.parent),
           subject: _subjectController.text.trim(),
+          email: _emailController.text.trim(),
           providerType: _institutionType,
         );
     Navigator.of(context).pushAndRemoveUntil(

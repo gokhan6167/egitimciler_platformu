@@ -158,9 +158,15 @@
   tablolarda "İŞLEM" kolon başlığı.
 - [x] widget_test güncellendi ("Arama sonuçları" başlığı yerine hap logo).
   14/14 test, analyze temiz.
-- Ertelenen (model değişikliği gerektirir): videoDuration, adres alanı,
-  ders başı fiyat (öğretmen "/ders (60 dk)"), trialLesson alanı + rozeti,
-  facet seçenek sayaçları, AppUser email/joinedAt, FilterSection subtitle.
+- [x] Model genişletmeleri de eklendi (aynı gün, "ekle ve deploy et"):
+  ProviderProfile.videoDuration/address/lessonPrice/trialLesson,
+  AppUser.email/joinedAt (mock'ta _emailFor + kademeli tarihler),
+  FilterSection.subtitle, AppState.facetOptionCount + registerUser(email:).
+  Ekran bağlamaları: browse (Deneme dersi toggle+rozet+çip, facet sayaçları,
+  öğretmen "/ders (60 dk)", video süresi), detay (rozet süreleri, adresli
+  konum kartı, öğretmen "ders ücreti" CTA, deneme hapı), admin (e-posta +
+  KAYIT TARİHİ kolonu, grup subtitle), register (email geçişi), landing
+  (öğretmen "₺X/ders").
 - NOT: Bu tasarım paketi SADECE bu projeye uygulanır (kullanıcı talimatı);
   flutter-gokhan reposuna dokunulmaz.
 
