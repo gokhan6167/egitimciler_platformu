@@ -80,15 +80,8 @@ class _LandingScreenState extends State<LandingScreen> {
     );
   }
 
-  /// "Tümünü gör": the results page with no filters.
-  void _openResults() {
-    final app = context.read<AppState>();
-    app.setSearch('');
-    app.setFilters(clear: true);
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const SearchResultsScreen()),
-    );
-  }
+  /// "Tümünü gör": the Özel Okul search page, as linked in the design.
+  void _openResults() => _browseCategory(ProviderType.privateSchool);
 
   void _comingSoon(String what) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -343,13 +336,22 @@ class _LandingScreenState extends State<LandingScreen> {
   // ---------- Featured (3 listings) ----------
 
   Widget _featured() {
-    final providers = context
+    // One listing per category (school, dershane, teacher), best rated
+    // first — mirrors the three sample cards on the design's home page.
+    final published = context
         .watch<AppState>()
         .providers
         .where((p) => p.status == ListingStatus.published)
         .toList()
       ..sort((a, b) => b.avgRating.compareTo(a.avgRating));
-    final top = providers.take(3).toList();
+    final top = <ProviderProfile>[
+      for (final type in const [
+        ProviderType.privateSchool,
+        ProviderType.dershane,
+        ProviderType.privateTeacher,
+      ])
+        ...published.where((p) => p.type == type).take(1),
+    ];
     final columns = _narrow ? 1 : (_wide ? 3 : 2);
 
     return _maxWidth(

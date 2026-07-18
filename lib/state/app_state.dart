@@ -367,6 +367,7 @@ class AppState extends ChangeNotifier {
 
     String? hay; // built lazily once per provider
     for (final section in config.sections) {
+      if (!section.affectsResults) continue; // chip-only sections
       final selected = facetSelection(config.type, section.id);
       if (selected.isEmpty) continue;
 
@@ -398,6 +399,7 @@ class AppState extends ChangeNotifier {
   int facetOptionCount(ProviderType type, FilterSection section, String option) {
     return providers.where((p) {
       if (p.status != ListingStatus.published || p.type != type) return false;
+      if (!section.affectsResults) return true;
       if (section.id == 'experience') {
         final years = userById(p.ownerUserId)?.experienceYears ?? 0;
         final wanted = int.tryParse(option.split('+').first.trim()) ?? 0;

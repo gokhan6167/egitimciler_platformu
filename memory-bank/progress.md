@@ -177,3 +177,21 @@
   tek satır kariyer şeridi, tek satır footer. KALDIRILAN bölümler:
   kategoriler ızgarası, karşılaştırma bölümü, büyük kariyer kartı,
   alıntı, CTA. "Tümünü gör" → genel sonuç sayfası. Canlıda doğrulandı.
+
+## 2026-07-18 — Eksik tasarım parçaları tamamlandı (kullanıcı bildirimi)
+- Kullanıcı design linklerini göstererek "bu sayfa eksik olmuş" dedi →
+  arama sayfalarındaki eksik filtre grupları ve landing kart karışımı.
+- [x] FilterSection.affectsResults eklendi: false olan gruplar tasarımdaki
+  gibi görünür + çip üretir ama sonucu süzmez (veri karşılığı yokken
+  sonuçların sıfırlanmasını önler). _matchesFacets ve facetOptionCount atlar.
+- [x] Tüm kategorilere tasarımdaki eksik filtre grupları eklendi:
+  okul → Mesafe (radio, kozmetik), Müfredat (kozmetik), Yabancı dil,
+  Sınıf mevcudu (kozmetik), Olanaklar design etiketleriyle; kurs → Ders
+  şekli (kozmetik), Grup büyüklüğü (kozmetik); dershane → Mesafe, Sınıf
+  mevcudu (kozmetik), Olanaklar design listesi, Ders günleri; öğretmen →
+  Uygunluk (kozmetik). Mock features 'Yemek'→'Yemekhane' (eşleşme için).
+- [x] Landing öne çıkanlar artık tasarımdaki gibi üç ayrı kategoriden
+  (en iyi okul + dershane + öğretmen); "Tümünü gör →" Özel Okul sayfasına.
+- [x] 14/14 test, analyze temiz; Vercel'e deploy edildi ve canlı site
+  puppeteer-core + headless Chrome ekran görüntüleriyle doğrulandı
+  (landing + okul arama filtre sütunu tasarımla birebir).

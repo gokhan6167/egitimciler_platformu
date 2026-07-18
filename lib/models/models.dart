@@ -65,8 +65,14 @@ class FilterSection {
     required this.title,
     required this.kind,
     this.subtitle = '',
+    this.affectsResults = true,
     List<String>? options,
   }) : options = options ?? [];
+
+  /// When false the section renders and produces chips like in the design
+  /// prototypes, but does not narrow results (no matching data yet,
+  /// e.g. distance or class size).
+  final bool affectsResults;
 
   final String id;
   String title;
