@@ -68,6 +68,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   int _role = 0;
   bool _termsAccepted = false;
+  bool _signingUp = false;
   ProviderType _institutionType = ProviderType.privateSchool;
   final _institutionController = TextEditingController();
   final _firstNameController = TextEditingController();
@@ -109,7 +110,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  void _signUp() {
+  Future<void> _signUp() async {
+    if (_signingUp) return;
     final personName =
         '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}'
             .trim();
@@ -140,6 +142,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
+    // "Hesap oluşturuluyor…" state from the design while the account is set up.
+    setState(() => _signingUp = true);
+    await Future.delayed(const Duration(milliseconds: 600));
+    if (!mounted) return;
     context.read<AppState>().registerUser(
           name: _isInstitution ? institutionName : personName,
           role: _isInstitution
@@ -365,7 +371,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(height: 18),
                   FilledButton(
                     onPressed: _signUp,
-                    child: const Text('Hesap oluştur'),
+                    child: Text(_signingUp
+                        ? 'Hesap oluşturuluyor…'
+                        : 'Hesap oluştur'),
                   ),
                   const SizedBox(height: 24),
                   const Row(
@@ -530,7 +538,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   border: Border(top: BorderSide(color: PusulaColors.border)),
                 ),
                 child: const Wrap(
-                  spacing: 12,
+                  spacing: 28,
                   runSpacing: 6,
                   children: [
                     Text('8.400+ doğrulanmış ilan', style: _statStyle),

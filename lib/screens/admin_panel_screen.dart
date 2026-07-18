@@ -671,14 +671,12 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                     style:
                         pusulaHeading(fontSize: 16, letterSpacingFactor: 0)),
               ),
-              // Active toggle
-              Switch(
+              // Active toggle — 40×22 pill switch from the design.
+              _DesignSwitch(
                 value: section.active,
-                activeThumbColor: Colors.white,
-                activeTrackColor: PusulaColors.primary,
-                onChanged: (_) =>
-                    app.toggleFilterSectionActive(type, section.id),
+                onTap: () => app.toggleFilterSectionActive(type, section.id),
               ),
+              const SizedBox(width: 8),
               IconButton(
                 tooltip: 'Grubu sil',
                 icon: const Icon(Icons.delete_outline,
@@ -711,21 +709,9 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                           style: const TextStyle(
                               fontSize: 13, color: PusulaColors.slate)),
                       const SizedBox(width: 8),
-                      InkWell(
+                      _OptionDeleteButton(
                         onTap: () =>
                             app.removeFilterOption(type, section.id, option),
-                        child: Container(
-                          width: 18,
-                          height: 18,
-                          decoration: const BoxDecoration(
-                            color: PusulaColors.border,
-                            shape: BoxShape.circle,
-                          ),
-                          alignment: Alignment.center,
-                          child: const Text('✕',
-                              style: TextStyle(
-                                  fontSize: 10, color: PusulaColors.muted)),
-                        ),
                       ),
                     ],
                   ),
@@ -888,7 +874,8 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
           padding: EdgeInsets.zero,
           child: Column(
             children: [
-              _tableHeader(const ['İLAN', 'KATEGORİ', 'PUAN', 'DURUM', '']),
+              _tableHeader(
+                  const ['İLAN', 'KATEGORİ', 'PUAN', 'DURUM', 'İŞLEM']),
               for (final p in app.providers)
                 _tableRow([
                   Column(
@@ -978,7 +965,8 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
           padding: EdgeInsets.zero,
           child: Column(
             children: [
-              _tableHeader(const ['KULLANICI', 'ROL', 'ŞEHİR', 'DURUM', '']),
+              _tableHeader(
+                  const ['KULLANICI', 'ROL', 'ŞEHİR', 'DURUM', 'İŞLEM']),
               for (final u in app.users.where((u) => u.role != UserRole.admin))
                 _tableRow([
                   Row(
@@ -1142,7 +1130,8 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
           padding: EdgeInsets.zero,
           child: Column(
             children: [
-              _tableHeader(const ['POZİSYON', 'KURUM', 'BAŞVURU', 'DURUM', '']),
+              _tableHeader(
+                  const ['POZİSYON', 'KURUM', 'BAŞVURU', 'DURUM', 'İŞLEM']),
               for (final j in app.jobs)
                 _tableRow([
                   Column(
@@ -1233,6 +1222,86 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// 40×22 pill toggle from the design (on: green, off: grey; animated knob).
+class _DesignSwitch extends StatelessWidget {
+  const _DesignSwitch({required this.value, required this.onTap});
+
+  final bool value;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          width: 40,
+          height: 22,
+          decoration: BoxDecoration(
+            color: value ? PusulaColors.primary : PusulaColors.borderDark,
+            borderRadius: BorderRadius.circular(100),
+          ),
+          child: AnimatedAlign(
+            duration: const Duration(milliseconds: 150),
+            alignment: value ? Alignment.centerRight : Alignment.centerLeft,
+            child: Container(
+              width: 16,
+              height: 16,
+              margin: const EdgeInsets.symmetric(horizontal: 3),
+              decoration: const BoxDecoration(
+                  shape: BoxShape.circle, color: Colors.white),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// ✕ delete button on a filter option pill: grey circle, red on hover.
+class _OptionDeleteButton extends StatefulWidget {
+  const _OptionDeleteButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  State<_OptionDeleteButton> createState() => _OptionDeleteButtonState();
+}
+
+class _OptionDeleteButtonState extends State<_OptionDeleteButton> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: 'Seçeneği kaldır',
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        onEnter: (_) => setState(() => _hovered = true),
+        onExit: (_) => setState(() => _hovered = false),
+        child: GestureDetector(
+          onTap: widget.onTap,
+          child: Container(
+            width: 18,
+            height: 18,
+            decoration: BoxDecoration(
+              color: _hovered ? _errText : PusulaColors.border,
+              shape: BoxShape.circle,
+            ),
+            alignment: Alignment.center,
+            child: Text('✕',
+                style: TextStyle(
+                    fontSize: 10,
+                    color: _hovered ? Colors.white : PusulaColors.muted)),
+          ),
+        ),
       ),
     );
   }

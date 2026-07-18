@@ -43,7 +43,8 @@ void main() {
     await tester.tap(find.text('Dershane').first);
     await tester.pumpAndSettle();
 
-    expect(find.text('Arama sonuçları'), findsOneWidget);
+    // AppBar now shows the green pill logo instead of a plain title (design).
+    expect(find.text('Pusula Eğitim'), findsOneWidget);
     expect(find.textContaining('Kavram Dershanesi'), findsWidgets);
 
     // Listing detail opens without an account and offers seeker actions.

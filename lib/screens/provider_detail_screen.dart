@@ -354,13 +354,27 @@ class ProviderDetailScreen extends StatelessWidget {
 
   Widget _mainColumn(BuildContext context, ProviderProfile p, AppUser? user,
       bool isOwner, AppUser? owner, bool isTeacher) {
+    // Captured by the reviews Builder below; lets the header's
+    // "Yorumları gör" link scroll down to the reviews section.
+    BuildContext? reviewsCtx;
+    void seeReviews() {
+      final c = reviewsCtx;
+      if (c != null && c.mounted) {
+        Scrollable.ensureVisible(
+          c,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOut,
+        );
+      }
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (isTeacher)
           _teacherHeader(context, p, owner)
         else
-          _header(context, p),
+          _header(context, p, seeReviews),
         if (isTeacher && p.videoUrl != null)
           _bordered(_videoBlock(context, p)),
         _bordered(_about(p, isTeacher)),
@@ -371,7 +385,10 @@ class ProviderDetailScreen extends StatelessWidget {
         if (p.features.isNotEmpty) _bordered(_facilities(p)),
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 28),
-          child: _reviews(context, p, user, isOwner),
+          child: Builder(builder: (c) {
+            reviewsCtx = c;
+            return _reviews(context, p, user, isOwner);
+          }),
         ),
       ],
     );
@@ -603,7 +620,8 @@ class ProviderDetailScreen extends StatelessWidget {
         child: child,
       );
 
-  Widget _header(BuildContext context, ProviderProfile p) {
+  Widget _header(
+      BuildContext context, ProviderProfile p, VoidCallback onSeeReviews) {
     return Container(
       padding: const EdgeInsets.only(bottom: 26),
       decoration: const BoxDecoration(
@@ -650,6 +668,16 @@ class ProviderDetailScreen extends StatelessWidget {
               Text(p.city,
                   style: const TextStyle(
                       fontSize: 14, color: PusulaColors.body)),
+              const Text('·',
+                  style: TextStyle(color: PusulaColors.body, fontSize: 14)),
+              InkWell(
+                onTap: onSeeReviews,
+                child: const Text('Yorumları gör',
+                    style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: PusulaColors.primary)),
+              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -752,11 +780,15 @@ class ProviderDetailScreen extends StatelessWidget {
   }
 
   Widget _programs(ProviderProfile p, bool isTeacher) {
+    // Type-specific layouts from the design: schools show a fee table
+    // ("Ücretler"), teachers a 3-column package grid with the middle
+    // card highlighted, dershane/kurs the 2-column program cards.
+    if (p.type == ProviderType.privateSchool) return _feeTable(p);
+    if (isTeacher) return _packages(p);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(isTeacher ? 'Ders paketleri' : 'Programlar',
-            style: pusulaHeading(fontSize: 20)),
+        Text('Programlar', style: pusulaHeading(fontSize: 20)),
         const SizedBox(height: 18),
         LayoutBuilder(
           builder: (context, constraints) {
@@ -819,6 +851,115 @@ class ProviderDetailScreen extends StatelessWidget {
     );
   }
 
+  /// School fee table from the "Ilan Detay - Ozel Okul" design:
+  /// level rows with right-aligned prices instead of program cards.
+  Widget _feeTable(ProviderProfile p) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Ücretler', style: pusulaHeading(fontSize: 20)),
+        const SizedBox(height: 6),
+        const Text('Yemek ve servis hariç',
+            style: TextStyle(fontSize: 13, color: PusulaColors.faint)),
+        const SizedBox(height: 16),
+        for (final prog in p.programs)
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 13),
+            decoration: const BoxDecoration(
+              border: Border(top: BorderSide(color: Color(0xFFF1EFEA))),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(prog.title,
+                      style: const TextStyle(
+                          fontSize: 15, color: PusulaColors.slate)),
+                ),
+                Text(prog.price,
+                    style: const TextStyle(
+                        fontSize: 15, fontWeight: FontWeight.w700)),
+              ],
+            ),
+          ),
+        const SizedBox(height: 12),
+        const Text('Erken kayıt ve kardeş indirimi için teklif isteyin.',
+            style: TextStyle(fontSize: 13, color: PusulaColors.muted)),
+      ],
+    );
+  }
+
+  /// Teacher lesson packages: 3-column grid, middle card highlighted
+  /// (green border on #FAFCFB) and the price shown large under the title.
+  Widget _packages(ProviderProfile p) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Ders paketleri', style: pusulaHeading(fontSize: 20)),
+        const SizedBox(height: 18),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final cols = constraints.maxWidth >= 620 ? 3 : 1;
+            final itemWidth =
+                (constraints.maxWidth - 16 * (cols - 1)) / cols;
+            return Wrap(
+              spacing: 16,
+              runSpacing: 16,
+              children: [
+                for (var i = 0; i < p.programs.length; i++)
+                  Builder(builder: (context) {
+                    final prog = p.programs[i];
+                    final highlighted = p.programs.length >= 3 && i == 1;
+                    return Container(
+                      width: itemWidth,
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: highlighted
+                            ? const Color(0xFFFAFCFB)
+                            : PusulaColors.card,
+                        border: Border.all(
+                            color: highlighted
+                                ? PusulaColors.primary
+                                : PusulaColors.border),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(prog.title,
+                              style: pusulaHeading(
+                                  fontSize: 16,
+                                  letterSpacingFactor: -0.01)),
+                          const SizedBox(height: 6),
+                          Text(prog.price,
+                              style: pusulaHeading(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w800)),
+                          const SizedBox(height: 8),
+                          Text(prog.description,
+                              style: const TextStyle(
+                                  fontSize: 13,
+                                  color: PusulaColors.muted,
+                                  height: 1.6)),
+                          if (prog.note.isNotEmpty) ...[
+                            const SizedBox(height: 10),
+                            Text(prog.note,
+                                style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: PusulaColors.primaryDark)),
+                          ],
+                        ],
+                      ),
+                    );
+                  }),
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+
   Widget _facilities(ProviderProfile p) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -871,7 +1012,10 @@ class ProviderDetailScreen extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: Text('Veli değerlendirmeleri',
+              child: Text(
+                  p.type == ProviderType.privateSchool
+                      ? 'Veli değerlendirmeleri'
+                      : 'Veli ve öğrenci değerlendirmeleri',
                   style: pusulaHeading(fontSize: 20)),
             ),
             Text.rich(
@@ -1012,13 +1156,24 @@ class ProviderDetailScreen extends StatelessWidget {
               const SizedBox(height: 20),
               if (!isOwner && owner != null) ...[
                 if (seekerish) ...[
-                  FilledButton(
-                    onPressed: () {
-                      if (_requireLogin(context)) _showOfferDialog(context);
-                    },
-                    child: Text(
-                        isTeacher ? 'Ders talebi gönder' : 'Teklif iste'),
-                  ),
+                  Builder(builder: (context) {
+                    // Design: primary CTA flips to "✓ ... gönderildi"
+                    // once a request exists for this listing.
+                    final offerSent = user != null &&
+                        app.offers.any((o) =>
+                            o.requesterId == user.id &&
+                            o.providerId == p.id);
+                    return FilledButton(
+                      onPressed: () {
+                        if (_requireLogin(context)) _showOfferDialog(context);
+                      },
+                      child: Text(offerSent
+                          ? (isTeacher
+                              ? '✓ Ders talebi gönderildi'
+                              : '✓ Teklif isteği gönderildi')
+                          : (isTeacher ? 'Ders talebi gönder' : 'Teklif iste')),
+                    );
+                  }),
                   const SizedBox(height: 10),
                 ],
                 OutlinedButton(
@@ -1050,9 +1205,16 @@ class ProviderDetailScreen extends StatelessWidget {
                   ),
                 ],
                 const SizedBox(height: 14),
-                const Center(
-                  child: Text('Ortalama yanıt süresi: 3 saat',
-                      style: TextStyle(
+                Center(
+                  child: Text(
+                      'Ortalama yanıt süresi: ${switch (p.type) {
+                        ProviderType.privateTeacher => '1 saat',
+                        ProviderType.dershane ||
+                        ProviderType.course =>
+                          '2 saat',
+                        ProviderType.privateSchool => '3 saat',
+                      }}',
+                      style: const TextStyle(
                           fontSize: 12, color: PusulaColors.faint)),
                 ),
               ] else
@@ -1333,7 +1495,7 @@ class ProviderDetailScreen extends StatelessWidget {
     }
 
     return Container(
-      margin: const EdgeInsets.only(top: 36),
+      margin: const EdgeInsets.only(top: 64),
       padding: const EdgeInsets.only(top: 40),
       decoration: const BoxDecoration(
         border: Border(top: BorderSide(color: PusulaColors.border)),

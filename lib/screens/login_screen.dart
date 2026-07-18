@@ -35,6 +35,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   int _activeTab = 0;
   String? _selectedUserId;
+  bool _signingIn = false;
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController(text: 'demo1234');
 
@@ -72,7 +73,8 @@ class _LoginScreenState extends State<LoginScreen> {
     });
   }
 
-  void _signIn() {
+  Future<void> _signIn() async {
+    if (_signingIn) return;
     final app = context.read<AppState>();
     final candidates = _usersForTab(app);
     if (candidates.isEmpty) return;
@@ -80,6 +82,10 @@ class _LoginScreenState extends State<LoginScreen> {
       (u) => u.id == _selectedUserId,
       orElse: () => candidates.first,
     );
+    // "Giriş yapılıyor…" state from the design while the sign-in completes.
+    setState(() => _signingIn = true);
+    await Future.delayed(const Duration(milliseconds: 600));
+    if (!mounted) return;
     app.signIn(user);
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => const HomeShell()),
@@ -203,7 +209,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 22),
                   FilledButton(
                     onPressed: _signIn,
-                    child: const Text('Giriş yap'),
+                    child:
+                        Text(_signingIn ? 'Giriş yapılıyor…' : 'Giriş yap'),
                   ),
                   const SizedBox(height: 26),
                   const Row(
@@ -284,7 +291,8 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
       child: Row(
         children: [
-          for (var i = 0; i < _tabs.length; i++)
+          for (var i = 0; i < _tabs.length; i++) ...[
+            if (i > 0) const SizedBox(width: 4),
             Expanded(
               child: InkWell(
                 borderRadius: BorderRadius.circular(100),
@@ -325,6 +333,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
             ),
+          ],
         ],
       ),
     );
@@ -496,7 +505,7 @@ class _SidePanel extends StatelessWidget {
                 ),
               const SizedBox(height: 48),
               const Wrap(
-                spacing: 12,
+                spacing: 28,
                 runSpacing: 6,
                 children: [
                   Text('8.400+ doğrulanmış ilan', style: _statStyle),

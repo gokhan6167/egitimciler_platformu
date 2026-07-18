@@ -136,6 +136,34 @@
   doğrudan tür sayfasını açar. Metin araması sonuç sayfasındaki çubukta
   yaşamaya devam ediyor. Widget testleri güncellendi (hero tab akışı).
 
+## 2026-07-18 — Design handoff paketi ile tam hizalama
+- Kaynak: "Eğitimciler Platformu Tasarımı.zip" → design_handoff_pusula_egitim
+  (README + 11 .dc.html; v2 ana sayfa, 4 arama, 3 ilan detay, giriş/kayıt, admin).
+- [x] Landing: nav 18px padding, istatistik aralığı 24px, kategori butonlarına
+  spec hover renkleri (#CFE6DD/#F3E2BE/#D9DDF4/#EED3E2), kartlarda
+  translateY(-4px) hover, öğretmen fiyat eki "/ders".
+- [x] Browse: yeşil hap logo (→ ana sayfa), "Kelime ile filtrele" bölümü
+  (türe özel placeholder, canlı süzme), doğrulanmış toggle'ı
+  (öğretmende "Belgeleri doğrulanmış"/çip "Belgeli"), tam genişlik Ara
+  (600ms "Aranıyor…"), kelime+doğrulanmış çipleri, kart hover (yeşil border
+  + gölge), öğretmen kartı varyantı (96px portre + ✓ rozet + "Ders talebi"),
+  ₺X.XXX fiyat biçimi, slider "₺X ve altı".
+- [x] Detay: okulda Ücretler tablosu, öğretmende 3'lü Ders paketleri
+  (ortadaki vurgulu), "Yorumları gör" kaydırması, gönderilmiş teklifte
+  "✓ ... gönderildi" CTA durumu, türe göre yanıt süresi/yorum başlığı,
+  Benzer ilanlar 64px üst boşluk.
+- [x] Auth: "Giriş yapılıyor…"/"Hesap oluşturuluyor…" durumları, rol sekmesi
+  4px boşluk, yan panel istatistik aralığı 28px.
+- [x] Admin: 40×22 özel toggle switch, seçenek ✕ hover kırmızı + tooltip,
+  tablolarda "İŞLEM" kolon başlığı.
+- [x] widget_test güncellendi ("Arama sonuçları" başlığı yerine hap logo).
+  14/14 test, analyze temiz.
+- Ertelenen (model değişikliği gerektirir): videoDuration, adres alanı,
+  ders başı fiyat (öğretmen "/ders (60 dk)"), trialLesson alanı + rozeti,
+  facet seçenek sayaçları, AppUser email/joinedAt, FilterSection subtitle.
+- NOT: Bu tasarım paketi SADECE bu projeye uygulanır (kullanıcı talimatı);
+  flutter-gokhan reposuna dokunulmaz.
+
 ## 2026-07-17 — Landing minimal v2 (tasarım yeniden güncellendi)
 - [x] Landing tamamen sadeleşti: ince nav (sadece logo + Giriş/Kayıt,
   nav linkleri yok), hero + 3 istatistik, "Öne çıkan ilanlar" (en yüksek

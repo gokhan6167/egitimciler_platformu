@@ -21,24 +21,31 @@ class LandingScreen extends StatefulWidget {
   State<LandingScreen> createState() => _LandingScreenState();
 }
 
-/// Hero category tab: each has its own pastel color and opens that
-/// type's search page directly.
+/// Hero category tab: each has its own pastel color (plus a darker hover
+/// tone from the design) and opens that type's search page directly.
 class _SearchTab {
-  const _SearchTab(this.label, this.bg, this.fg);
+  const _SearchTab(this.label, this.bg, this.fg, this.hover);
 
   final String label;
   final Color bg;
   final Color fg;
+  final Color hover;
 }
 
 class _LandingScreenState extends State<LandingScreen> {
   int _activeTab = 0;
+  int? _hoveredTab;
+  int? _hoveredCard;
 
   static const _tabs = [
-    _SearchTab('Özel Okul', Color(0xFFEAF3EF), Color(0xFF0B5E4C)),
-    _SearchTab('Kurs', Color(0xFFFBF1DF), Color(0xFF8A6212)),
-    _SearchTab('Dershane', Color(0xFFEEF0FB), Color(0xFF3A46A0)),
-    _SearchTab('Özel Öğretmen', Color(0xFFF7EAF1), Color(0xFF8A2E63)),
+    _SearchTab('Özel Okul', Color(0xFFEAF3EF), Color(0xFF0B5E4C),
+        Color(0xFFCFE6DD)),
+    _SearchTab(
+        'Kurs', Color(0xFFFBF1DF), Color(0xFF8A6212), Color(0xFFF3E2BE)),
+    _SearchTab('Dershane', Color(0xFFEEF0FB), Color(0xFF3A46A0),
+        Color(0xFFD9DDF4)),
+    _SearchTab('Özel Öğretmen', Color(0xFFF7EAF1), Color(0xFF8A2E63),
+        Color(0xFFEED3E2)),
   ];
 
   static const _tabTypes = [
@@ -137,7 +144,7 @@ class _LandingScreenState extends State<LandingScreen> {
       child: Center(
         child: _maxWidth(
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 14),
+            padding: const EdgeInsets.symmetric(vertical: 18),
             child: Row(
               children: [
                 const PusulaLogo(),
@@ -218,7 +225,7 @@ class _LandingScreenState extends State<LandingScreen> {
                   _searchBar(),
                   const SizedBox(height: 24),
                   const Wrap(
-                    spacing: 12,
+                    spacing: 24,
                     runSpacing: 6,
                     alignment: WrapAlignment.center,
                     children: [
@@ -243,27 +250,32 @@ class _LandingScreenState extends State<LandingScreen> {
   /// Colored category button inside the search pill.
   Widget _heroTab(int i) {
     final tab = _tabs[i];
-    return InkWell(
-      borderRadius: BorderRadius.circular(100),
-      onTap: () {
-        setState(() => _activeTab = i);
-        _browseCategory(_tabTypes[i]);
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: tab.bg,
-          borderRadius: BorderRadius.circular(100),
-        ),
-        child: Text(
-          tab.label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: tab.fg,
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hoveredTab = i),
+      onExit: (_) => setState(() => _hoveredTab = null),
+      child: GestureDetector(
+        onTap: () {
+          setState(() => _activeTab = i);
+          _browseCategory(_tabTypes[i]);
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: _hoveredTab == i ? tab.hover : tab.bg,
+            borderRadius: BorderRadius.circular(100),
+          ),
+          child: Text(
+            tab.label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: tab.fg,
+            ),
           ),
         ),
       ),
@@ -371,8 +383,8 @@ class _LandingScreenState extends State<LandingScreen> {
                 spacing: 24,
                 runSpacing: 24,
                 children: [
-                  for (final p in top)
-                    SizedBox(width: w, child: _listingCard(p)),
+                  for (var i = 0; i < top.length; i++)
+                    SizedBox(width: w, child: _listingCard(top[i], i)),
                 ],
               );
             }),
@@ -382,14 +394,29 @@ class _LandingScreenState extends State<LandingScreen> {
     );
   }
 
-  Widget _listingCard(ProviderProfile p) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(14),
-      onTap: () => Navigator.of(context).push(
-        MaterialPageRoute(
-            builder: (_) => ProviderDetailScreen(providerId: p.id)),
+  Widget _listingCard(ProviderProfile p, int index) {
+    // Card hover lifts the whole card by 4px, as on the design's home lists.
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hoveredCard = index),
+      onExit: (_) => setState(() => _hoveredCard = null),
+      child: GestureDetector(
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(
+              builder: (_) => ProviderDetailScreen(providerId: p.id)),
+        ),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          transform: Matrix4.translationValues(
+              0, _hoveredCard == index ? -4 : 0, 0),
+          child: _listingCardBody(p),
+        ),
       ),
-      child: Column(
+    );
+  }
+
+  Widget _listingCardBody(ProviderProfile p) {
+    return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ClipRRect(
@@ -438,13 +465,15 @@ class _LandingScreenState extends State<LandingScreen> {
                     style: const TextStyle(
                         fontSize: 13, color: PusulaColors.muted)),
               ),
-              Text('${formatPrice(p.monthlyPrice)}/ay',
-                  style: const TextStyle(
-                      fontSize: 13, color: PusulaColors.body)),
+              Text(
+                '${formatPrice(p.monthlyPrice)}'
+                '${p.type == ProviderType.privateTeacher ? '/ders' : '/ay'}',
+                style: const TextStyle(
+                    fontSize: 13, color: PusulaColors.body),
+              ),
             ],
           ),
         ],
-      ),
     );
   }
 

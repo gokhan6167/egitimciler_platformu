@@ -22,13 +22,27 @@ class SearchResultsScreen extends StatelessWidget {
     final signedIn = context.watch<AppState>().currentUser != null;
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const PusulaLogo(size: 22),
-            const SizedBox(width: 8),
-            Text('Arama sonuçları', style: pusulaHeading(fontSize: 16)),
-          ],
+        // Green pill logo from the search-page designs; tapping returns home.
+        title: InkWell(
+          borderRadius: BorderRadius.circular(100),
+          onTap: () => Navigator.of(context).popUntil((r) => r.isFirst),
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(12, 7, 16, 7),
+            decoration: BoxDecoration(
+              color: PusulaColors.primarySoft,
+              borderRadius: BorderRadius.circular(100),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const PusulaLogo(size: 22),
+                const SizedBox(width: 8),
+                Text('Pusula Eğitim',
+                    style: pusulaHeading(
+                        fontSize: 16, color: PusulaColors.primaryDark)),
+              ],
+            ),
+          ),
         ),
         centerTitle: false,
         actions: [
@@ -64,6 +78,13 @@ class _BrowseScreenState extends State<BrowseScreen> {
   // Seeded with the query typed on the landing hero, if any.
   late final TextEditingController _searchController;
   int _sort = 0; // 0 önerilen (puan), 1 puan, 2 ücret (artan)
+
+  /// Design: "Yalnızca doğrulanmış kurumlar" / "Belgeleri doğrulanmış"
+  /// toggle really filters (badge == Doğrulanmış). Local view state.
+  bool _verifiedOnly = false;
+
+  /// Design: sidebar "Ara" button shows "Aranıyor…" for 600 ms.
+  bool _searching = false;
 
   static const _ratingSteps = [0.0, 4.0, 4.5, 4.8];
   static const _ratingLabels = ['Tümü', '4.0+', '4.5+', '4.8+'];
@@ -302,7 +323,11 @@ class _BrowseScreenState extends State<BrowseScreen> {
     final app = context.watch<AppState>();
     final user = app.currentUser; // null → guest arriving from landing search
     final canCompare = user == null || user.role.isSeeker;
-    final list = _sorted(app.filteredProviders);
+    var visible = app.filteredProviders;
+    if (_verifiedOnly) {
+      visible = visible.where((p) => p.badge == 'Doğrulanmış').toList();
+    }
+    final list = _sorted(visible);
     final wide = MediaQuery.of(context).size.width >= 980;
 
     return wide
@@ -495,7 +520,12 @@ class _BrowseScreenState extends State<BrowseScreen> {
                 final type = app.filterType;
                 if (type != null) app.clearFacets(type: type);
                 app.setFilters(type: type);
-                setState(() => _sort = 0);
+                _searchController.clear();
+                app.setSearch('');
+                setState(() {
+                  _sort = 0;
+                  _verifiedOnly = false;
+                });
               },
               child: const Text('Temizle',
                   style: TextStyle(
@@ -506,6 +536,34 @@ class _BrowseScreenState extends State<BrowseScreen> {
           ],
         ),
         const SizedBox(height: 8),
+        _section(
+          'Kelime ile filtrele',
+          [
+            TextField(
+              controller: _searchController,
+              onChanged: app.setSearch,
+              style: const TextStyle(fontSize: 14),
+              decoration: InputDecoration(
+                hintText: _keywordHint(app.filterType),
+                hintStyle: const TextStyle(
+                    fontSize: 14, color: PusulaColors.faint),
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 12),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(100),
+                  borderSide:
+                      const BorderSide(color: PusulaColors.borderDark),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(100),
+                  borderSide:
+                      const BorderSide(color: PusulaColors.primary),
+                ),
+              ),
+            ),
+          ],
+        ),
         if (config == null)
           _section(
             'Tür',
@@ -533,9 +591,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
               children: [
                 const Expanded(child: SizedBox()),
                 Text(
-                  app.filterMaxPrice == null
-                      ? 'Sınırsız'
-                      : '${formatPrice(app.filterMaxPrice!)} ve altı',
+                  '${_tl((app.filterMaxPrice ?? 30000).toDouble())} ve altı',
                   style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -590,9 +646,69 @@ class _BrowseScreenState extends State<BrowseScreen> {
             ),
           ],
         ),
+        Container(
+          padding: const EdgeInsets.symmetric(vertical: 18),
+          decoration: const BoxDecoration(
+            border: Border(top: BorderSide(color: PusulaColors.border)),
+          ),
+          child: _checkRow(
+            app.filterType == ProviderType.privateTeacher
+                ? 'Belgeleri doğrulanmış'
+                : 'Yalnızca doğrulanmış kurumlar',
+            _verifiedOnly,
+            () => setState(() => _verifiedOnly = !_verifiedOnly),
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.only(top: 18),
+          decoration: const BoxDecoration(
+            border: Border(top: BorderSide(color: PusulaColors.border)),
+          ),
+          child: SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: _searching
+                  ? null
+                  : () {
+                      context.read<AppState>().setSearch(
+                          _searchController.text);
+                      setState(() => _searching = true);
+                      Future.delayed(const Duration(milliseconds: 600), () {
+                        if (mounted) setState(() => _searching = false);
+                      });
+                    },
+              style: FilledButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 13),
+                disabledBackgroundColor: PusulaColors.primary,
+                disabledForegroundColor: Colors.white,
+              ),
+              child: Text(_searching ? 'Aranıyor…' : 'Ara'),
+            ),
+          ),
+        ),
       ],
     );
   }
+
+  /// Design shows prices as "₺6.500" (shared formatPrice still says "X TL";
+  /// changing it app-wide is a common.dart edit — reported, not done here).
+  String _tl(double v) {
+    final s = v.toStringAsFixed(0);
+    final buf = StringBuffer('₺');
+    for (var i = 0; i < s.length; i++) {
+      if (i > 0 && (s.length - i) % 3 == 0) buf.write('.');
+      buf.write(s[i]);
+    }
+    return buf.toString();
+  }
+
+  String _keywordHint(ProviderType? type) => switch (type) {
+        ProviderType.privateSchool => 'Örn. robotik, havuz, servis…',
+        ProviderType.course => 'Örn. robotik, native eğitmen…',
+        ProviderType.dershane => 'Örn. deneme sınavı, birebir etüt…',
+        ProviderType.privateTeacher => 'Örn. geometri, LGS, online…',
+        null => 'Örn. robotik, havuz, LGS…',
+      };
 
   void _setType(AppState app, ProviderType? t) => app.setFilters(
         type: t,
@@ -921,94 +1037,130 @@ class _BrowseScreenState extends State<BrowseScreen> {
       if (app.filterCity != null)
         chip(app.filterCity!, () => _setCity(app, null)),
       if (app.filterMaxPrice != null)
-        chip('≤ ${formatPrice(app.filterMaxPrice!)}',
+        chip('≤ ${_tl(app.filterMaxPrice!)}',
             () => app.setFilters(
                   type: app.filterType,
                   city: app.filterCity,
                   maxPrice: null,
                   minRating: app.filterMinRating,
                 )),
+      if (_verifiedOnly)
+        chip(
+            app.filterType == ProviderType.privateTeacher
+                ? 'Belgeli'
+                : 'Doğrulanmış',
+            () => setState(() => _verifiedOnly = false)),
       if (app.filterMinRating > 0)
         chip('★ ${app.filterMinRating.toStringAsFixed(1)}+',
             () => _setRating(app, 0)),
+      if (app.searchQuery.trim().isNotEmpty)
+        chip('“${app.searchQuery.trim()}”', () {
+          _searchController.clear();
+          app.setSearch('');
+        }),
     ];
   }
 
   Widget _resultCard(AppState app, ProviderProfile p, bool canCompare) {
     final inCompare = app.isInCompare(p.id);
+    final isTeacher = p.type == ProviderType.privateTeacher;
+    var hovered = false;
 
-    return InkWell(
+    return StatefulBuilder(
+      builder: (context, setCard) => MouseRegion(
+        onEnter: (_) => setCard(() => hovered = true),
+        onExit: (_) => setCard(() => hovered = false),
+        child: InkWell(
       borderRadius: BorderRadius.circular(16),
       onTap: () => _openDetail(p),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(isTeacher ? 20 : 16),
         decoration: BoxDecoration(
           color: PusulaColors.card,
-          border: Border.all(color: PusulaColors.border),
+          border: Border.all(
+              color: hovered ? PusulaColors.primary : PusulaColors.border),
           borderRadius: BorderRadius.circular(16),
+          // Design: hover shadow 0 8px 24px -16px rgba(26,34,44,0.18).
+          boxShadow: hovered
+              ? const [
+                  BoxShadow(
+                    color: Color.fromRGBO(26, 34, 44, 0.18),
+                    blurRadius: 24,
+                    spreadRadius: -16,
+                    offset: Offset(0, 8),
+                  ),
+                ]
+              : null,
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // photo
-            SizedBox(
-              width: 220,
-              height: 156,
-              child: Stack(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: p.photoUrls.isEmpty
-                        ? Container(
-                            width: 220,
-                            height: 156,
-                            color: PusulaColors.patternA,
-                            alignment: Alignment.center,
-                            child: const Icon(Icons.school_outlined,
-                                color: PusulaColors.faint, size: 32),
-                          )
-                        : NetworkPhoto(
-                            url: p.photoUrls.first, width: 220, height: 156),
-                  ),
-                  Positioned(
-                    top: 10,
-                    left: 10,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: PusulaColors.primarySoft,
-                        borderRadius: BorderRadius.circular(100),
-                      ),
-                      child: Text(
-                          p.badge == 'Doğrulanmış' ? '✓ Doğrulanmış' : p.badge,
-                          style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: PusulaColors.primaryDark)),
+            if (isTeacher)
+              _teacherPortrait(p)
+            else
+              // photo
+              SizedBox(
+                width: 220,
+                height: 156,
+                child: Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: p.photoUrls.isEmpty
+                          ? Container(
+                              width: 220,
+                              height: 156,
+                              color: PusulaColors.patternA,
+                              alignment: Alignment.center,
+                              child: const Icon(Icons.school_outlined,
+                                  color: PusulaColors.faint, size: 32),
+                            )
+                          : NetworkPhoto(
+                              url: p.photoUrls.first,
+                              width: 220,
+                              height: 156),
                     ),
-                  ),
-                  if (p.videoUrl != null)
                     Positioned(
-                      bottom: 10,
-                      right: 10,
+                      top: 10,
+                      left: 10,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 9, vertical: 4),
+                            horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: PusulaColors.ink.withValues(alpha: 0.75),
+                          color: PusulaColors.primarySoft,
                           borderRadius: BorderRadius.circular(100),
                         ),
-                        child: const Text('▶ Tanıtım',
-                            style: TextStyle(
+                        child: Text(
+                            p.badge == 'Doğrulanmış'
+                                ? '✓ Doğrulanmış'
+                                : p.badge,
+                            style: const TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.white)),
+                                color: PusulaColors.primaryDark)),
                       ),
                     ),
-                ],
+                    if (p.videoUrl != null)
+                      Positioned(
+                        bottom: 10,
+                        right: 10,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 9, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: PusulaColors.ink.withValues(alpha: 0.75),
+                            borderRadius: BorderRadius.circular(100),
+                          ),
+                          child: const Text('▶ Tanıtım',
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white)),
+                        ),
+                      ),
+                  ],
+                ),
               ),
-            ),
             const SizedBox(width: 20),
             // info
             Expanded(
@@ -1025,6 +1177,14 @@ class _BrowseScreenState extends State<BrowseScreen> {
                                 height: 1.3,
                                 letterSpacingFactor: -0.01)),
                       ),
+                      if (isTeacher &&
+                          (app.userById(p.ownerUserId)?.subject ?? '')
+                              .isNotEmpty) ...[
+                        const SizedBox(width: 10),
+                        Text(app.userById(p.ownerUserId)!.subject,
+                            style: const TextStyle(
+                                fontSize: 13, color: PusulaColors.muted)),
+                      ],
                       const SizedBox(width: 14),
                       Text.rich(
                         TextSpan(
@@ -1045,7 +1205,13 @@ class _BrowseScreenState extends State<BrowseScreen> {
                     ],
                   ),
                   const SizedBox(height: 6),
-                  Text('${p.type.labelTr} · ${p.city}',
+                  Text(
+                      isTeacher &&
+                              (app.userById(p.ownerUserId)?.experienceYears ??
+                                      0) >
+                                  0
+                          ? '${app.userById(p.ownerUserId)!.experienceYears} yıl deneyim · ${p.city}'
+                          : '${p.type.labelTr} · ${p.city}',
                       style: const TextStyle(
                           fontSize: 13, color: PusulaColors.muted)),
                   const SizedBox(height: 8),
@@ -1090,12 +1256,12 @@ class _BrowseScreenState extends State<BrowseScreen> {
                     ),
                     child: Row(
                       children: [
-                        Text(formatPrice(p.monthlyPrice),
+                        Text(_tl(p.monthlyPrice),
                             style: pusulaHeading(
                                 fontSize: 18, fontWeight: FontWeight.w800)),
                         const SizedBox(width: 5),
-                        const Text('/ay başlangıç',
-                            style: TextStyle(
+                        Text(isTeacher ? '/ay' : '/ay başlangıç',
+                            style: const TextStyle(
                                 fontSize: 13, color: PusulaColors.faint)),
                         const Spacer(),
                         if (canCompare)
@@ -1132,7 +1298,8 @@ class _BrowseScreenState extends State<BrowseScreen> {
                             textStyle: const TextStyle(
                                 fontSize: 13, fontWeight: FontWeight.w600),
                           ),
-                          child: const Text('Teklif iste'),
+                          child:
+                              Text(isTeacher ? 'Ders talebi' : 'Teklif iste'),
                         ),
                       ],
                     ),
@@ -1142,6 +1309,49 @@ class _BrowseScreenState extends State<BrowseScreen> {
             ),
           ],
         ),
+      ),
+        ),
+      ),
+    );
+  }
+
+  /// Teacher card leading: 96 px round portrait with a green ✓ badge
+  /// (from the "Arama - Ozel Ogretmen" design).
+  Widget _teacherPortrait(ProviderProfile p) {
+    return SizedBox(
+      width: 96,
+      height: 96,
+      child: Stack(
+        children: [
+          ClipOval(
+            child: p.photoUrls.isEmpty
+                ? Container(
+                    width: 96,
+                    height: 96,
+                    color: PusulaColors.patternA,
+                    alignment: Alignment.center,
+                    child: const Icon(Icons.person_outline,
+                        color: PusulaColors.faint, size: 32),
+                  )
+                : NetworkPhoto(
+                    url: p.photoUrls.first, width: 96, height: 96),
+          ),
+          if (p.badge == 'Doğrulanmış')
+            Positioned(
+              bottom: 2,
+              right: 2,
+              child: Container(
+                width: 20,
+                height: 20,
+                decoration: BoxDecoration(
+                  color: PusulaColors.primary,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2),
+                ),
+                child: const Icon(Icons.check, size: 11, color: Colors.white),
+              ),
+            ),
+        ],
       ),
     );
   }
