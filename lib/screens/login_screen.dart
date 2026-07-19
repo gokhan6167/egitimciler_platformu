@@ -7,6 +7,7 @@ import '../theme/pusula_theme.dart';
 import 'home_shell.dart';
 import 'landing_screen.dart';
 import 'register_screen.dart';
+import 'static_pages.dart';
 
 /// Sign-in screen from the "Giris Yap" Claude Design file: split layout with
 /// the form on the left and a testimonial side panel on the right.
@@ -188,7 +189,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       _fieldLabel('Şifre'),
                       const Spacer(),
                       InkWell(
-                        onTap: () => _comingSoon('Şifre sıfırlama'),
+                        onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (_) => const HelpScreen())),
                         child: const Text('Şifremi unuttum',
                             style: TextStyle(
                                 fontSize: 13,

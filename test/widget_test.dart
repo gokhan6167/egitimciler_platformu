@@ -321,4 +321,158 @@ void main() {
       expect(job.applicantUserIds, contains(teacher.id));
     });
   });
+
+  group('handoff v2 features', () {
+    test('student listings are closed network: teachers see, parents own', () {
+      final app = AppState();
+      final parent = app.users.firstWhere((u) => u.role == UserRole.parent);
+      final teacher = app.users.firstWhere((u) => u.role == UserRole.teacher);
+      final institution =
+          app.users.firstWhere((u) => u.role == UserRole.institution);
+
+      app.signIn(teacher);
+      expect(app.visibleStudentListings, isNotEmpty,
+          reason: 'teachers browse all active listings');
+
+      app.signIn(institution);
+      expect(app.visibleStudentListings, isEmpty,
+          reason: 'institutions never see student listings');
+
+      app.signIn(parent);
+      expect(
+          app.visibleStudentListings.every((l) => l.ownerUserId == parent.id),
+          isTrue,
+          reason: 'seekers only see their own listings');
+    });
+
+    test('bid flow: teacher bids once, owner accepts -> listing matched', () {
+      final app = AppState();
+      final teacher = app.users.firstWhere((u) => u.id == 'u_ogretmen2');
+      app.signIn(teacher);
+      final listing = app.studentListings.first;
+      expect(app.placeBid(listing, 1000, 'Uygunum'), isTrue);
+      expect(app.placeBid(listing, 900, 'Tekrar'), isFalse,
+          reason: 'one bid per teacher per listing');
+
+      final bid = app.bids
+          .firstWhere((b) => b.teacherUserId == teacher.id &&
+              b.listingId == listing.id);
+      app.acceptBid(bid);
+      expect(bid.status, BidStatus.accepted);
+      expect(listing.status, StudentListingStatus.matched);
+    });
+
+    test('contact masking hides phone/e-mail until a bid is accepted', () {
+      final app = AppState();
+      final listing = app.studentListings.first; // owner: u_veli
+      final owner = app.userById(listing.ownerUserId)!;
+      final teacher = app.users.firstWhere((u) => u.id == 'u_ogretmen3');
+
+      app.signIn(owner);
+      final conv = app.conversationWith(teacher.id);
+      const risky = 'Numaram 0532 123 45 67, mail: veli@ornek.com';
+
+      final (maskedText, masked) = app.maskContact(risky, conv);
+      expect(masked, isTrue);
+      expect(maskedText.contains('0532'), isFalse);
+      expect(maskedText.contains('veli@ornek.com'), isFalse);
+
+      // Teacher's bid gets accepted -> contact unlocks.
+      app.signIn(teacher);
+      app.placeBid(listing, 950, 'Merhaba');
+      final bid = app.bids.firstWhere((b) =>
+          b.teacherUserId == teacher.id && b.listingId == listing.id);
+      app.acceptBid(bid);
+
+      final (unmaskedText, stillMasked) = app.maskContact(risky, conv);
+      expect(stillMasked, isFalse);
+      expect(unmaskedText, risky);
+    });
+
+    test('admin plan price edits feed the pricing page data', () {
+      final app = AppState();
+      final premium =
+          app.pricingPlans.firstWhere((p) => p.id == 'plan_premium');
+      expect(premium.price, 1490);
+
+      app.setPlanPrice(premium, 1690);
+      expect(
+          app
+              .plansFor(PlanAudience.institution)
+              .firstWhere((p) => p.id == 'plan_premium')
+              .price,
+          1690,
+          reason: 'Ücretlendirme reads the same objects');
+
+      app.setPlanOnSale(premium, false);
+      expect(premium.onSale, isFalse);
+      expect(app.monthlyRecurringRevenue,
+          lessThan(1690 * premium.subscribers + 1),
+          reason: 'paused plans drop out of MRR');
+    });
+
+    test('admin price range edits drive search slider bounds', () {
+      final app = AppState();
+      final before = app.priceRangeFor(ProviderType.privateSchool);
+      expect(before.min, 2000);
+      expect(before.max, 15000);
+      expect(before.step, 500);
+
+      app.setPriceRange('privateSchool', max: 20000, step: 1000);
+      final after = app.priceRangeFor(ProviderType.privateSchool);
+      expect(after.max, 20000);
+      expect(after.step, 1000);
+    });
+
+    test('district filter narrows results, sort keys reorder them', () {
+      final app = AppState();
+      app.setFilters(type: ProviderType.privateSchool, city: 'İstanbul');
+      app.toggleFilterDistrict('Kadıköy');
+      expect(app.filteredProviders.every((p) => p.district == 'Kadıköy'),
+          isTrue);
+      app.toggleFilterDistrict('Kadıköy');
+
+      app.setFilters(type: ProviderType.privateSchool);
+      app.setSortKey('price');
+      final prices = app.filteredProviders
+          .map(AppState.effectivePrice)
+          .toList();
+      for (var i = 1; i < prices.length; i++) {
+        expect(prices[i - 1] <= prices[i], isTrue,
+            reason: 'ascending price sort');
+      }
+
+      app.setSortKey('newest');
+      final dates =
+          app.filteredProviders.map((p) => p.createdAt).toList();
+      for (var i = 1; i < dates.length; i++) {
+        expect(dates[i - 1].isBefore(dates[i]), isFalse,
+            reason: 'newest first');
+      }
+    });
+
+    test('panel edits mark unsaved changes; submit sends to review', () {
+      final app = AppState();
+      final teacher = app.users.firstWhere((u) => u.id == 'u_ogretmen1');
+      app.signIn(teacher);
+      final p = app.myProvider!;
+      expect(p.hasUnsavedChanges, isFalse);
+
+      app.updateMyProvider(description: 'Yeni tanıtım');
+      expect(p.hasUnsavedChanges, isTrue);
+
+      app.submitMyProviderForReview();
+      expect(p.hasUnsavedChanges, isFalse);
+      expect(p.status, ListingStatus.pending,
+          reason: 'edits go back through moderation');
+
+      // Panel feature toggles use the same options as search filters.
+      final section = app
+          .configFor(p.type)!
+          .sections
+          .firstWhere((s) => s.id == 'brans');
+      app.selectMyProviderFeature(section, section.options.first);
+      expect(p.features, contains(section.options.first));
+    });
+  });
 }

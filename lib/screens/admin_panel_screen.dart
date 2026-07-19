@@ -39,6 +39,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     ('◉', 'Kullanıcılar'),
     ('✎', 'Yorumlar'),
     ('⚑', 'İş ilanları'),
+    ('₺', 'Paketler & gelir'),
   ];
 
   static const _catTypes = [
@@ -71,6 +72,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
       _users(app),
       _reviews(app),
       _jobs(app),
+      _packages(app),
     ];
 
     return Scaffold(
@@ -581,6 +583,8 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
           ],
         ),
         const SizedBox(height: 24),
+        _priceRangeCard(app, type),
+        const SizedBox(height: 20),
         LayoutBuilder(builder: (ctx, c) {
           final two = c.maxWidth >= 760;
           final w = two ? (c.maxWidth - 20) / 2 : c.maxWidth;
@@ -622,6 +626,78 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  /// "Ücret aralığı" group: holds the search page's slider min/max/step
+  /// (README: bu grup alt/üst sınır + adım değerlerini tutar).
+  Widget _priceRangeCard(AppState app, ProviderType type) {
+    final range = app.priceRangeFor(type);
+    final isTeacher = type == ProviderType.privateTeacher;
+
+    Widget field(String label, double value, void Function(double) apply) {
+      final key = 'range_${type.name}_$label';
+      final ctl = _optionDrafts.putIfAbsent(
+          key, () => TextEditingController(text: value.toStringAsFixed(0)));
+      return SizedBox(
+        width: 150,
+        child: TextField(
+          controller: ctl,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(
+            labelText: label,
+            prefixText: '₺ ',
+            isDense: true,
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          ),
+          style: const TextStyle(fontSize: 13.5),
+          onChanged: (v) {
+            final parsed = double.tryParse(v.replaceAll('.', ''));
+            if (parsed != null && parsed > 0) apply(parsed);
+          },
+        ),
+      );
+    }
+
+    return _card(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                    isTeacher
+                        ? 'Ücret aralığı — ders ücreti (60 dk)'
+                        : 'Ücret aralığı — aylık ücret',
+                    style: pusulaHeading(fontSize: 15)),
+              ),
+              _chip('Arama kaydırıcısını besler', 'ok'),
+            ],
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Bu değerler ilgili arama sayfasındaki fiyat kaydırıcısının alt/üst '
+            'sınırını ve adımını belirler.',
+            style: TextStyle(fontSize: 12.5, color: PusulaColors.muted),
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              field('Alt sınır', range.min,
+                  (v) => app.setPriceRange(type.name, min: v)),
+              field('Üst sınır', range.max,
+                  (v) => app.setPriceRange(type.name, max: v)),
+              field('Adım', range.step,
+                  (v) => app.setPriceRange(type.name, step: v)),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -1201,6 +1277,183 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
   // ---------- Table helpers ----------
 
   static const _tableFlex = [20, 10, 8, 8, 10];
+
+  // ---------- 7. Paketler & gelir ----------
+
+  String _tlFmt(double v) {
+    final s = v.toStringAsFixed(0);
+    final buf = StringBuffer('₺');
+    for (var i = 0; i < s.length; i++) {
+      if (i > 0 && (s.length - i) % 3 == 0) buf.write('.');
+      buf.write(s[i]);
+    }
+    return buf.toString();
+  }
+
+  TextEditingController _priceDraft(PricingPlan p) {
+    return _optionDrafts.putIfAbsent('price_${p.id}',
+        () => TextEditingController(text: p.price.toStringAsFixed(0)));
+  }
+
+  Widget _packages(AppState app) {
+    final revenueCards = [
+      (
+        'Aylık yinelenen gelir (MRR)',
+        _tlFmt(app.monthlyRecurringRevenue),
+        '▲ paket satışları',
+        'ok'
+      ),
+      (
+        'Aktif abonelik',
+        '${app.activeSubscriptions}',
+        'ücretli paketler',
+        'ok'
+      ),
+      (
+        'Veli tarafı',
+        '₺0',
+        'her zaman ücretsiz · komisyon yok',
+        'ok'
+      ),
+    ];
+
+    Widget group(String title, PlanAudience audience) {
+      final plans = app.plansFor(audience);
+      return _card(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: pusulaHeading(fontSize: 16)),
+            const SizedBox(height: 12),
+            for (final p in plans)
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                decoration: const BoxDecoration(
+                  border: Border(
+                      top: BorderSide(color: Color(0xFFF1EFEA))),
+                ),
+                child: Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 12,
+                  runSpacing: 8,
+                  children: [
+                    SizedBox(
+                      width: 220,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(p.name,
+                                    style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w700)),
+                              ),
+                              if (p.popular) ...[
+                                const SizedBox(width: 6),
+                                _chip('Popüler', 'ok'),
+                              ],
+                            ],
+                          ),
+                          Text('${p.subscribers} abone',
+                              style: const TextStyle(
+                                  fontSize: 12,
+                                  color: PusulaColors.muted)),
+                        ],
+                      ),
+                    ),
+                    SizedBox(
+                      width: 130,
+                      child: TextField(
+                        controller: _priceDraft(p),
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          prefixText: '₺ ',
+                          suffixText: p.period,
+                          isDense: true,
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 8),
+                        ),
+                        style: const TextStyle(fontSize: 13.5),
+                        onSubmitted: (v) => _applyPlanPrice(app, p, v),
+                        onChanged: (v) => _applyPlanPrice(app, p, v),
+                      ),
+                    ),
+                    _chip(p.onSale ? 'Satışta' : 'Satış durdu',
+                        p.onSale ? 'ok' : 'warn'),
+                    _smallActionButton(
+                      p.onSale ? 'Satışı durdur' : 'Satışa aç',
+                      () => app.setPlanOnSale(p, !p.onSale),
+                      danger: p.onSale,
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _pageHeader('Paketler & gelir',
+            'Fiyat değişiklikleri Ücretlendirme sayfasına anında yansır'),
+        LayoutBuilder(builder: (ctx, c) {
+          final cols = c.maxWidth >= 700 ? 3 : 1;
+          final w = (c.maxWidth - (cols - 1) * 16) / cols;
+          return Wrap(
+            spacing: 16,
+            runSpacing: 16,
+            children: [
+              for (final (label, value, delta, kind) in revenueCards)
+                SizedBox(
+                  width: w,
+                  child: _card(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(label,
+                            style: const TextStyle(
+                                fontSize: 13, color: PusulaColors.muted)),
+                        const SizedBox(height: 8),
+                        Text(value,
+                            style: pusulaHeading(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w800)),
+                        const SizedBox(height: 6),
+                        Text(delta,
+                            style: TextStyle(
+                                fontSize: 12,
+                                color: kind == 'ok'
+                                    ? PusulaColors.primary
+                                    : _warnText)),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          );
+        }),
+        const SizedBox(height: 20),
+        group('Kurum paketleri', PlanAudience.institution),
+        const SizedBox(height: 16),
+        group('Öğretmen paketleri', PlanAudience.teacher),
+        const SizedBox(height: 16),
+        group('Ek ürünler', PlanAudience.addon),
+      ],
+    );
+  }
+
+  void _applyPlanPrice(AppState app, PricingPlan p, String v) {
+    final price =
+        double.tryParse(v.replaceAll('.', '').replaceAll(',', '.'));
+    if (price == null || price < 0) return;
+    app.setPlanPrice(p, price);
+  }
 
   Widget _tableHeader(List<String> labels) {
     return Container(

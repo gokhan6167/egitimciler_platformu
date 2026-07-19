@@ -7,6 +7,7 @@ import '../theme/pusula_theme.dart';
 import 'home_shell.dart';
 import 'landing_screen.dart';
 import 'login_screen.dart';
+import 'static_pages.dart';
 
 /// Sign-up screen from the "Kayit Ol" Claude Design file: role cards on the
 /// left form, role-aware fields and a role-aware perks side panel. Demo-only
@@ -101,6 +102,56 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void _goToSignIn() {
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => const LoginScreen()),
+    );
+  }
+
+  /// Design: agreement opens as a modal, with a link to the full page.
+  void _openTermsModal() {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Kullanıcı Sözleşmesi'),
+        content: SizedBox(
+          width: 520,
+          height: 420,
+          child: ListView(
+            children: [
+              for (var i = 0; i < TermsScreen.sections.length; i++) ...[
+                Text('${i + 1}. ${TermsScreen.sections[i].$1}',
+                    style: pusulaHeading(fontSize: 15)),
+                const SizedBox(height: 6),
+                for (final para in TermsScreen.sections[i].$2)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Text(para.startsWith('• ') ? para : para,
+                        style: const TextStyle(
+                            fontSize: 13,
+                            height: 1.5,
+                            color: PusulaColors.body)),
+                  ),
+                const SizedBox(height: 10),
+              ],
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => const TermsScreen()));
+            },
+            child: const Text('Tam sayfa aç'),
+          ),
+          FilledButton(
+            onPressed: () {
+              setState(() => _termsAccepted = true);
+              Navigator.of(ctx).pop();
+            },
+            child: const Text('Okudum, kabul ediyorum'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -340,26 +391,45 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                         ),
                         const SizedBox(width: 9),
-                        const Expanded(
+                        Expanded(
                           child: Text.rich(
                             TextSpan(
-                              text: 'Kullanım koşullarını',
-                              style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: PusulaColors.primary),
                               children: [
-                                TextSpan(
+                                WidgetSpan(
+                                  child: InkWell(
+                                    onTap: _openTermsModal,
+                                    child: const Text(
+                                        'Kullanıcı Sözleşmesi\'ni',
+                                        style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                            color: PusulaColors.primary)),
+                                  ),
+                                ),
+                                const TextSpan(
                                   text: ' ve ',
                                   style: TextStyle(
-                                      fontWeight: FontWeight.w400,
+                                      fontSize: 13,
                                       color: PusulaColors.body),
                                 ),
-                                TextSpan(text: 'KVKK aydınlatma metnini'),
-                                TextSpan(
+                                WidgetSpan(
+                                  child: InkWell(
+                                    onTap: () => Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                            builder: (_) =>
+                                                const KvkkScreen())),
+                                    child: const Text(
+                                        'KVKK aydınlatma metnini',
+                                        style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                            color: PusulaColors.primary)),
+                                  ),
+                                ),
+                                const TextSpan(
                                   text: ' okudum, kabul ediyorum.',
                                   style: TextStyle(
-                                      fontWeight: FontWeight.w400,
+                                      fontSize: 13,
                                       color: PusulaColors.body),
                                 ),
                               ],
@@ -367,6 +437,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                         ),
                       ],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: PusulaColors.surface,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text(
+                      '18 yaş altındaki kullanıcılar platformu veli onayı ve '
+                      'gözetiminde kullanır.',
+                      style: TextStyle(
+                          fontSize: 12, color: PusulaColors.muted),
                     ),
                   ),
                   const SizedBox(height: 18),
