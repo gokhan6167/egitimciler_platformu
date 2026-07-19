@@ -178,6 +178,63 @@
   kategoriler ızgarası, karşılaştırma bölümü, büyük kariyer kartı,
   alıntı, CTA. "Tümünü gör" → genel sonuç sayfası. Canlıda doğrulandı.
 
+## 2026-07-19 — Handoff v2: 29 dosyalık tam paket uygulandı
+- Kaynak: "Eğitimciler Platformu Tasarımı (1).zip" → design_handoff_pusula_egitim
+  (README + 28 sayfa + iller.js). README'deki navigasyon haritası,
+  panel kuralları ve kabul listesi esas alındı.
+- [x] Veri: lib/data/iller.dart (81 il + 973 ilçe, iller.js'ten üretildi).
+  Tüm il/ilçe seçicileri buradan besleniyor (arama, paneller, formlar).
+- [x] Modeller: StudentListing + ListingBid (kapalı ağ öğrenci ilanları),
+  PricingPlan (desc/cta/subscribers/onSale), PriceRangeConfig,
+  ProviderProfile.district/phone/createdAt/hasUnsavedChanges,
+  JobPosting.benefits.
+- [x] AppState: ilçe çoklu filtre, sıralama anahtarları (Önerilen/Puan/
+  Ücret/Mesafe/Yorum/Yeni + öğretmende Deneyim/Yanıt hızı; öğrenci
+  ilanlarında En yeni/Bütçe/Yakınımda/Teklif/Hemen başlayacak),
+  effectivePrice (öğretmen=ders ücreti), priceRanges (admin yönetir),
+  pricingPlans + MRR, bid akışı (placeBid/acceptBid/rejectBid),
+  maskContact (telefon/e-posta ilk ders onayına kadar gizli),
+  panel durum akışı (hasUnsavedChanges → submitMyProviderForReview →
+  pending), providerStats.
+- [x] Vitrin: HelpScreen (4 grup SSS), SecurityScreen, KvkkScreen,
+  TermsScreen (kayıtta modal + tam sayfa), PricingScreen (admin
+  paketleriyle senkron, sekmeler + ek ürünler + SSS), CareerScreen
+  (kapalı ağ rozeti, açık pozisyonlar, 2 CTA kartı).
+- [x] Paneller: ProviderPanelScreen (4 tür için ortak: durum çipi,
+  4 istatistik kartı, foto/video yönetimi, arama filtreleriyle birebir
+  senkron seçmeli özellik grupları, canlı kart önizleme, KVKK notu),
+  StudentListingPanelScreen (ilan + gelen teklif kabul/ret + önizleme),
+  TeacherProfileCreateScreen (5 adım + ders paketi satırları + belge
+  yükleme), JobPostScreen (çoklu pozisyon, maaş aralığı, yan olanaklar,
+  pozisyon başına ayrı ilan). HomeShell sekmeleri güncellendi
+  (İlanlarım / Öğrenci İlanları / Panelim).
+- [x] Arama: üst kategori menüsü (5 link + Tekliflerim + Mesajlar),
+  il→ilçe hap seçimi, admin fiyat aralığından beslenen slider
+  (maks'ta sınırsız), genişletilmiş sıralama hapları, tasarımdaki
+  0-sonuç kartı, ≤980px filtre akordeonu. StudentListingsScreen
+  (öğretmene özel; ders/seviye/yer/bütçe/hemen başlayacak filtreleri).
+- [x] Tekliflerim: gelen teklif kartları (kabul → Mesaja git),
+  giden istekler tablosu (KURUM/KATEGORİ/TARİH/DURUM/İŞLEM),
+  öğretmenin verdiği teklifler. Mesajlaşma: çift panel, sohbet arama,
+  okunmamış noktası, teklif bağlam şeridi, yeşil balonlar
+  (16/16/4/16), maskeleme uyarı hapı, mobil tek sütun.
+  Karşılaştır: 4 sütun, en iyi değer yeşil hücre, ★ Konsül önerisi,
+  "Yalnızca farkları göster", ✓/— satırları, yatay kaydırma.
+- [x] Admin: 7. bölüm "Paketler & gelir" (MRR + abonelik + veli ₺0
+  kartları; fiyat inputu → Ücretlendirme'ye anında yansır; satışı
+  durdur/aç) ve filtre yönetiminde "Ücret aralığı" kartı
+  (alt/üst/adım → arama slider'ı).
+- [x] Kayıt: sözleşme modalı + tam sayfa linki, KVKK linki, 18 yaş altı
+  veli onayı notu. Giriş: "Şifremi unuttum" → Yardım.
+- [x] Karşılaştırma limiti 3→4 (tasarım gereği); testler güncellendi.
+- [x] 21/21 test (7 yeni state testi), analyze temiz, Vercel prod
+  deploy (pusula-egitim.vercel.app) ve canlıda puppeteer-core ile
+  landing + Ücretlendirme + Özel Okul araması ekran görüntüleriyle
+  doğrulandı.
+- NOT: Tasarımdaki kurum panelleri arası çapraz linkler (statik
+  prototip kalıntısı) tek-hesap-tek-ilan modeline uymadığından
+  "Paketler" + rol bazlı sekmelerle karşılandı.
+
 ## 2026-07-18 — Eksik tasarım parçaları tamamlandı (kullanıcı bildirimi)
 - Kullanıcı design linklerini göstererek "bu sayfa eksik olmuş" dedi →
   arama sayfalarındaki eksik filtre grupları ve landing kart karışımı.
