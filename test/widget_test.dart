@@ -219,8 +219,11 @@ void main() {
       expect(app.filteredProviders.every((p) => p.city == 'İstanbul'), isTrue);
 
       app.setFilters(maxPrice: 5000);
+      // Teachers are priced per lesson, institutions per month.
       expect(
-          app.filteredProviders.every((p) => p.monthlyPrice <= 5000), isTrue);
+          app.filteredProviders
+              .every((p) => AppState.effectivePrice(p) <= 5000),
+          isTrue);
 
       app.setFilters(minRating: 4.5);
       expect(app.filteredProviders.every((p) => p.avgRating >= 4.5), isTrue);
@@ -233,18 +236,19 @@ void main() {
               .length);
     });
 
-    test('compare list is capped at 3', () {
+    test('compare list is capped at 4 (design: en fazla 4 ilan)', () {
       final app = AppState();
       final ids = app.providers.map((p) => p.id).toList();
 
       expect(app.toggleCompare(ids[0]), isTrue);
       expect(app.toggleCompare(ids[1]), isTrue);
       expect(app.toggleCompare(ids[2]), isTrue);
-      expect(app.toggleCompare(ids[3]), isFalse, reason: 'limit is 3');
-      expect(app.compareList.length, 3);
+      expect(app.toggleCompare(ids[3]), isTrue);
+      expect(app.toggleCompare(ids[4]), isFalse, reason: 'limit is 4');
+      expect(app.compareList.length, 4);
 
       expect(app.toggleCompare(ids[0]), isTrue, reason: 'removal always works');
-      expect(app.compareList.length, 2);
+      expect(app.compareList.length, 3);
     });
 
     test('offer flow: request -> quote -> accept', () {

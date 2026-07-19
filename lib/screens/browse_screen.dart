@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../data/iller.dart';
 import '../models/models.dart';
 import '../state/app_state.dart';
 import '../theme/pusula_theme.dart';
@@ -9,7 +10,9 @@ import '../widgets/home_button.dart';
 import 'compare_screen.dart';
 import 'login_screen.dart';
 import 'messages_screen.dart';
+import 'offers_screen.dart';
 import 'provider_detail_screen.dart';
+import 'student_listings_screen.dart';
 
 /// Standalone results page for guests coming from the landing hero search.
 /// Wraps [BrowseScreen] in its own scaffold; signing in is offered but not
@@ -77,7 +80,9 @@ class BrowseScreen extends StatefulWidget {
 class _BrowseScreenState extends State<BrowseScreen> {
   // Seeded with the query typed on the landing hero, if any.
   late final TextEditingController _searchController;
-  int _sort = 0; // 0 önerilen (puan), 1 puan, 2 ücret (artan)
+
+  /// Mobile (≤980px): filters live in a collapsible accordion.
+  bool _showFiltersNarrow = false;
 
   /// Design: "Yalnızca doğrulanmış kurumlar" / "Belgeleri doğrulanmış"
   /// toggle really filters (badge == Doğrulanmış). Local view state.
@@ -184,156 +189,21 @@ class _BrowseScreenState extends State<BrowseScreen> {
     );
   }
 
-  // ---------- Narrow-layout filter sheet ----------
-
-  Future<void> _openFilters(BuildContext context) async {
-    final app = context.read<AppState>();
-    var type = app.filterType;
-    var city = app.filterCity;
-    var maxPrice = app.filterMaxPrice;
-    var minRating = app.filterMinRating;
-
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      builder: (sheetCtx) => StatefulBuilder(
-        builder: (ctx, setSheet) => Padding(
-          padding: EdgeInsets.only(
-            left: 16,
-            right: 16,
-            top: 16,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Filtrele', style: Theme.of(ctx).textTheme.titleLarge),
-              const SizedBox(height: 12),
-              const Text('Tür'),
-              Wrap(
-                spacing: 8,
-                children: [
-                  ChoiceChip(
-                    label: const Text('Tümü'),
-                    selected: type == null,
-                    onSelected: (_) => setSheet(() => type = null),
-                  ),
-                  for (final t in ProviderType.values)
-                    ChoiceChip(
-                      label: Text(t.labelTr),
-                      selected: type == t,
-                      onSelected: (_) => setSheet(() => type = t),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              const Text('Şehir'),
-              Wrap(
-                spacing: 8,
-                children: [
-                  ChoiceChip(
-                    label: const Text('Tümü'),
-                    selected: city == null,
-                    onSelected: (_) => setSheet(() => city = null),
-                  ),
-                  for (final c in app.cities)
-                    ChoiceChip(
-                      label: Text(c),
-                      selected: city == c,
-                      onSelected: (_) => setSheet(() => city = c),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text('En yüksek aylık ücret: '
-                  '${maxPrice == null ? 'Sınırsız' : formatPrice(maxPrice!)}'),
-              Slider(
-                value: (maxPrice ?? 30000).clamp(1000, 30000),
-                min: 1000,
-                max: 30000,
-                divisions: 29,
-                onChanged: (v) =>
-                    setSheet(() => maxPrice = v >= 30000 ? null : v),
-              ),
-              Text('En düşük puan: '
-                  '${minRating == 0 ? 'Farketmez' : minRating.toStringAsFixed(1)}'),
-              Slider(
-                value: minRating,
-                min: 0,
-                max: 5,
-                divisions: 10,
-                onChanged: (v) => setSheet(() => minRating = v),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  TextButton(
-                    onPressed: () {
-                      app.setFilters(clear: true);
-                      Navigator.pop(sheetCtx);
-                    },
-                    child: const Text('Temizle'),
-                  ),
-                  const Spacer(),
-                  FilledButton(
-                    onPressed: () {
-                      app.setFilters(
-                        type: type,
-                        city: city,
-                        maxPrice: maxPrice,
-                        minRating: minRating,
-                      );
-                      Navigator.pop(sheetCtx);
-                    },
-                    child: const Text('Uygula'),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   // ---------- Build ----------
-
-  static const _sortLabels = ['Önerilen', 'Puan', 'Ücret ↑', 'Ücret ↓'];
-
-  List<ProviderProfile> _sorted(List<ProviderProfile> list) {
-    final copy = List.of(list);
-    switch (_sort) {
-      case 1: // puan
-        copy.sort((a, b) => b.avgRating.compareTo(a.avgRating));
-      case 2: // ücret artan
-        copy.sort((a, b) => a.monthlyPrice.compareTo(b.monthlyPrice));
-      case 3: // ücret azalan
-        copy.sort((a, b) => b.monthlyPrice.compareTo(a.monthlyPrice));
-      default: // önerilen: puan, eşitse yorum sayısı
-        copy.sort((a, b) {
-          final r = b.avgRating.compareTo(a.avgRating);
-          return r != 0
-              ? r
-              : b.publishedReviews.length.compareTo(a.publishedReviews.length);
-        });
-    }
-    return copy;
-  }
 
   @override
   Widget build(BuildContext context) {
     final app = context.watch<AppState>();
     final user = app.currentUser; // null → guest arriving from landing search
     final canCompare = user == null || user.role.isSeeker;
-    var visible = app.filteredProviders;
+    // Sorting is applied inside AppState.filteredProviders via sortKey.
+    var list = app.filteredProviders;
     if (_verifiedOnly) {
-      visible = visible.where((p) => p.badge == 'Doğrulanmış').toList();
+      list = list.where((p) => p.badge == 'Doğrulanmış').toList();
     }
     if (_trialOnly) {
-      visible = visible.where((p) => p.trialLesson).toList();
+      list = list.where((p) => p.trialLesson).toList();
     }
-    final list = _sorted(visible);
     final wide = MediaQuery.of(context).size.width >= 980;
 
     return wide
@@ -343,10 +213,91 @@ class _BrowseScreenState extends State<BrowseScreen> {
 
   // ---------- Wide layout (design) ----------
 
+  /// Search-page top menu from the design: 5 category links (active one
+  /// green/bold) + separator + Tekliflerim + Mesajlar.
+  Widget _categoryMenu(AppState app) {
+    Widget link(String label, bool active, VoidCallback onTap) {
+      return InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(6),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 13.5,
+              fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+              color: active ? PusulaColors.primaryDark : PusulaColors.body,
+            ),
+          ),
+        ),
+      );
+    }
+
+    void requireLoginThen(Widget Function() page, String title) {
+      if (app.currentUser == null) {
+        Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const LoginScreen()));
+        return;
+      }
+      Navigator.of(context).push(MaterialPageRoute(
+        builder: (_) => Scaffold(
+          appBar: AppBar(
+              title: Text(title),
+              actions: const [HomeButton(), SizedBox(width: 8)]),
+          body: page(),
+        ),
+      ));
+    }
+
+    return Container(
+      decoration: const BoxDecoration(
+        color: PusulaColors.card,
+        border: Border(bottom: BorderSide(color: PusulaColors.border)),
+      ),
+      child: Center(
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 1200),
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 6),
+          child: Row(
+            children: [
+              for (final t in ProviderType.values)
+                link(t.labelTr, app.filterType == t,
+                    () => _setType(app, t)),
+              link(
+                'Öğrenci İlanları',
+                false,
+                () => requireLoginThen(
+                    () => const StudentListingsScreen(),
+                    'Öğrenci İlanları'),
+              ),
+              const Spacer(),
+              Container(
+                  width: 1, height: 18, color: PusulaColors.border),
+              link(
+                'Tekliflerim',
+                false,
+                () => requireLoginThen(
+                    () => const OffersScreen(), 'Tekliflerim'),
+              ),
+              link(
+                'Mesajlar',
+                false,
+                () => requireLoginThen(
+                    () => const MessagesScreen(), 'Mesajlar'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _wideLayout(
       AppState app, List<ProviderProfile> list, bool canCompare) {
     return Column(
       children: [
+        _categoryMenu(app),
         _searchBarRow(app),
         if (canCompare && app.compareIds.isNotEmpty) _compareBar(app),
         Expanded(
@@ -450,7 +401,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
                     items: [
                       const DropdownMenuItem<String?>(
                           value: null, child: Text('Tüm iller')),
-                      for (final c in app.cities)
+                      for (final c in iller)
                         DropdownMenuItem<String?>(value: c, child: Text(c)),
                     ],
                     style: const TextStyle(
@@ -526,10 +477,10 @@ class _BrowseScreenState extends State<BrowseScreen> {
                 final type = app.filterType;
                 if (type != null) app.clearFacets(type: type);
                 app.setFilters(type: type);
+                app.setSortKey('recommended');
                 _searchController.clear();
                 app.setSearch('');
                 setState(() {
-                  _sort = 0;
                   _verifiedOnly = false;
                   _trialOnly = false;
                 });
@@ -591,55 +542,45 @@ class _BrowseScreenState extends State<BrowseScreen> {
         else
           for (final section in config.sections.where((s) => s.active))
             _facetSection(app, config.type, section),
+        _priceSection(app),
         _section(
-          'Aylık ücret',
+          'İl',
           [
-            Row(
-              children: [
-                const Expanded(child: SizedBox()),
-                Text(
-                  '${_tl((app.filterMaxPrice ?? 30000).toDouble())} ve altı',
-                  style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: PusulaColors.primaryDark),
-                ),
+            DropdownButtonFormField<String?>(
+              initialValue: app.filterCity,
+              isExpanded: true,
+              decoration: const InputDecoration(
+                  isDense: true,
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 14, vertical: 10)),
+              items: [
+                const DropdownMenuItem<String?>(
+                    value: null, child: Text('Tüm iller')),
+                for (final c in iller)
+                  DropdownMenuItem<String?>(value: c, child: Text(c)),
               ],
+              onChanged: (v) => _setCity(app, v),
             ),
-            Slider(
-              value: (app.filterMaxPrice ?? 30000).clamp(1000, 30000),
-              min: 1000,
-              max: 30000,
-              divisions: 29,
-              onChanged: (v) => app.setFilters(
-                type: app.filterType,
-                city: app.filterCity,
-                maxPrice: v >= 30000 ? null : v,
-                minRating: app.filterMinRating,
+          ],
+        ),
+        if (app.filterCity != null)
+          _section(
+            'İlçe · birden fazla seçilebilir',
+            [
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final ilce
+                      in ilceler[app.filterCity] ?? const <String>[])
+                    _facetPill(
+                        ilce,
+                        app.filterDistricts.contains(ilce),
+                        () => app.toggleFilterDistrict(ilce)),
+                ],
               ),
-            ),
-            const Row(
-              children: [
-                Text('₺1.000',
-                    style:
-                        TextStyle(fontSize: 12, color: PusulaColors.faint)),
-                Expanded(child: SizedBox()),
-                Text('₺30.000+',
-                    style:
-                        TextStyle(fontSize: 12, color: PusulaColors.faint)),
-              ],
-            ),
-          ],
-        ),
-        _section(
-          'Şehir',
-          [
-            _radioRow('Tümü', app.filterCity == null,
-                () => _setCity(app, null)),
-            for (final c in app.cities)
-              _radioRow(c, app.filterCity == c, () => _setCity(app, c)),
-          ],
-        ),
+            ],
+          ),
         _section(
           'En az puan',
           [
@@ -701,6 +642,60 @@ class _BrowseScreenState extends State<BrowseScreen> {
               child: Text(_searching ? 'Aranıyor…' : 'Ara'),
             ),
           ),
+        ),
+      ],
+    );
+  }
+
+  /// Price slider bounds come from the admin-managed price range config
+  /// (per README: okul 2.000–15.000/500, kurs 500–6.000/250,
+  /// dershane 1.000–8.000/250, öğretmen 200–1.500/50). At max → no cap.
+  Widget _priceSection(AppState app) {
+    final range = app.priceRangeFor(app.filterType);
+    final isTeacher = app.filterType == ProviderType.privateTeacher;
+    final value = (app.filterMaxPrice ?? range.max)
+        .clamp(range.min, range.max)
+        .toDouble();
+    return _section(
+      isTeacher ? 'Ders ücreti (60 dk)' : 'Aylık ücret',
+      [
+        Row(
+          children: [
+            const Expanded(child: SizedBox()),
+            Text(
+              value >= range.max
+                  ? '${_tl(range.max)}+ (tümü)'
+                  : '${_tl(value)} ve altı',
+              style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: PusulaColors.primaryDark),
+            ),
+          ],
+        ),
+        Slider(
+          value: value,
+          min: range.min,
+          max: range.max,
+          divisions:
+              ((range.max - range.min) / range.step).round().clamp(1, 500),
+          onChanged: (v) => app.setFilters(
+            type: app.filterType,
+            city: app.filterCity,
+            maxPrice: v >= range.max ? null : v,
+            minRating: app.filterMinRating,
+          ),
+        ),
+        Row(
+          children: [
+            Text(_tl(range.min),
+                style: const TextStyle(
+                    fontSize: 12, color: PusulaColors.faint)),
+            const Expanded(child: SizedBox()),
+            Text('${_tl(range.max)}+',
+                style: const TextStyle(
+                    fontSize: 12, color: PusulaColors.faint)),
+          ],
         ),
       ],
     );
@@ -970,13 +965,19 @@ class _BrowseScreenState extends State<BrowseScreen> {
                 ],
               ),
             ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 6,
+          runSpacing: 6,
+          children: [
             const Text('Sırala:',
                 style: TextStyle(fontSize: 13, color: PusulaColors.muted)),
-            const SizedBox(width: 10),
-            for (var i = 0; i < _sortLabels.length; i++) ...[
-              if (i > 0) const SizedBox(width: 6),
-              _sortPill(_sortLabels[i], i),
-            ],
+            for (final (key, label)
+                in AppState.sortOptionsFor(app.filterType))
+              _sortPill(app, key, label),
           ],
         ),
         if (chips.isNotEmpty)
@@ -986,12 +987,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
           ),
         const SizedBox(height: 20),
         if (list.isEmpty)
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 48),
-            child: Center(
-                child: Text(
-                    'Sonuç bulunamadı. Filtreleri gevşetmeyi deneyin.')),
-          )
+          _emptyState(app)
         else
           for (final p in list) ...[
             _resultCard(app, p, canCompare),
@@ -1001,11 +997,56 @@ class _BrowseScreenState extends State<BrowseScreen> {
     );
   }
 
-  Widget _sortPill(String label, int i) {
-    final selected = _sort == i;
+  /// 0-result card from the design: ⌕ icon + guidance + clear button.
+  Widget _emptyState(AppState app) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 48),
+      decoration: BoxDecoration(
+        color: PusulaColors.card,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: PusulaColors.border),
+      ),
+      child: Column(
+        children: [
+          const Text('⌕',
+              style: TextStyle(fontSize: 40, color: PusulaColors.faint)),
+          const SizedBox(height: 8),
+          Text('Bu kriterlere uygun sonuç bulunamadı',
+              style: pusulaHeading(fontSize: 18)),
+          const SizedBox(height: 6),
+          const Text(
+            'Kelime filtresini kaldırmayı, ücret sınırını artırmayı veya '
+            'ilçe seçimini genişletmeyi deneyin.',
+            style: TextStyle(fontSize: 13.5, color: PusulaColors.body),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 14),
+          OutlinedButton(
+            onPressed: () {
+              final type = app.filterType;
+              if (type != null) app.clearFacets(type: type);
+              app.setFilters(type: type);
+              app.setSortKey('recommended');
+              _searchController.clear();
+              app.setSearch('');
+              setState(() {
+                _verifiedOnly = false;
+                _trialOnly = false;
+              });
+            },
+            child: const Text('Filtreleri temizle'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _sortPill(AppState app, String key, String label) {
+    final selected = app.sortKey == key;
     return InkWell(
       borderRadius: BorderRadius.circular(100),
-      onTap: () => setState(() => _sort = i),
+      onTap: () => app.setSortKey(key),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
@@ -1058,6 +1099,8 @@ class _BrowseScreenState extends State<BrowseScreen> {
             chip(option, () => app.toggleFacet(config.type, section, option)),
       if (app.filterCity != null)
         chip(app.filterCity!, () => _setCity(app, null)),
+      for (final d in app.filterDistricts.toList())
+        chip(d, () => app.toggleFilterDistrict(d)),
       if (app.filterMaxPrice != null)
         chip('≤ ${_tl(app.filterMaxPrice!)}',
             () => app.setFilters(
@@ -1444,16 +1487,23 @@ class _BrowseScreenState extends State<BrowseScreen> {
                   onChanged: app.setSearch,
                 ),
               ),
-              const SizedBox(width: 8),
-              Badge(
-                isLabelVisible: hasFilter,
-                child: IconButton.filledTonal(
-                  tooltip: 'Filtrele',
-                  icon: const Icon(Icons.tune),
-                  onPressed: () => _openFilters(context),
-                ),
-              ),
             ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+          child: SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: () => setState(
+                  () => _showFiltersNarrow = !_showFiltersNarrow),
+              child: Badge(
+                isLabelVisible: hasFilter && !_showFiltersNarrow,
+                child: Text(_showFiltersNarrow
+                    ? '☰ Filtreleri gizle'
+                    : '☰ Filtreleri göster'),
+              ),
+            ),
           ),
         ),
         if (canCompare && app.compareIds.isNotEmpty)
@@ -1476,16 +1526,31 @@ class _BrowseScreenState extends State<BrowseScreen> {
             ),
           ),
         Expanded(
-          child: list.isEmpty
-              ? const Center(
-                  child: Text(
-                      'Sonuç bulunamadı. Filtreleri gevşetmeyi deneyin.'))
-              : ListView.builder(
-                  padding: const EdgeInsets.all(12),
-                  itemCount: list.length,
-                  itemBuilder: (context, i) => _ProviderCard(
-                      provider: list[i], showCompare: canCompare),
+          child: ListView(
+            padding: const EdgeInsets.all(12),
+            children: [
+              // Mobile filter accordion (design: ≤980px filters collapse).
+              if (_showFiltersNarrow)
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: PusulaColors.card,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: PusulaColors.border),
+                  ),
+                  child: _sidebar(app),
                 ),
+              if (list.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: _emptyState(app),
+                )
+              else
+                for (final p in list)
+                  _ProviderCard(provider: p, showCompare: canCompare),
+            ],
+          ),
         ),
       ],
     );

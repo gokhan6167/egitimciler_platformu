@@ -6,10 +6,13 @@ import '../state/app_state.dart';
 import '../theme/pusula_theme.dart';
 import '../widgets/common.dart';
 import 'browse_screen.dart';
+import 'career_screen.dart';
 import 'home_shell.dart';
 import 'login_screen.dart';
+import 'pricing_screen.dart';
 import 'provider_detail_screen.dart';
 import 'register_screen.dart';
+import 'static_pages.dart';
 
 /// Public landing page from the minimal "Pusula Egitim v2" design:
 /// slim nav, hero with colored category buttons, three featured listings,
@@ -83,12 +86,6 @@ class _LandingScreenState extends State<LandingScreen> {
   /// "Tümünü gör": the Özel Okul search page, as linked in the design.
   void _openResults() => _browseCategory(ProviderType.privateSchool);
 
-  void _comingSoon(String what) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$what sayfası demo sürümünde henüz yok.')),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -146,6 +143,16 @@ class _LandingScreenState extends State<LandingScreen> {
                     style: pusulaHeading(
                         fontSize: 17, letterSpacingFactor: -0.01)),
                 const Spacer(),
+                if (MediaQuery.of(context).size.width >= 900) ...[
+                  TextButton(
+                    onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                            builder: (_) => const PricingScreen())),
+                    child: const Text('Ücretlendirme',
+                        style: TextStyle(color: PusulaColors.ink)),
+                  ),
+                  const SizedBox(width: 6),
+                ],
                 if (signedIn)
                   FilledButton(
                     style: FilledButton.styleFrom(
@@ -579,7 +586,8 @@ class _LandingScreenState extends State<LandingScreen> {
               ),
             ),
             InkWell(
-              onTap: _goToSignIn,
+              onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const CareerScreen())),
               child: const Text('Öğretmen kariyeri →',
                   style: TextStyle(
                       fontSize: 14,
@@ -608,9 +616,14 @@ class _LandingScreenState extends State<LandingScreen> {
             Wrap(
               spacing: 20,
               children: [
-                for (final label in const ['Yardım', 'Güvenlik', 'KVKK'])
+                for (final (label, page) in <(String, WidgetBuilder)>[
+                  ('Yardım', (_) => const HelpScreen()),
+                  ('Güvenlik', (_) => const SecurityScreen()),
+                  ('KVKK', (_) => const KvkkScreen()),
+                ])
                   InkWell(
-                    onTap: () => _comingSoon(label),
+                    onTap: () => Navigator.of(context)
+                        .push(MaterialPageRoute(builder: page)),
                     child: Text(label,
                         style: const TextStyle(
                             fontSize: 13, color: PusulaColors.faint)),
