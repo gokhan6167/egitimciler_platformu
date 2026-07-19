@@ -11,8 +11,10 @@ import 'jobs_screen.dart';
 import 'landing_screen.dart';
 import 'login_screen.dart';
 import 'messages_screen.dart';
-import 'my_profile_screen.dart';
 import 'offers_screen.dart';
+import 'panel_screen.dart';
+import 'student_listing_panel_screen.dart';
+import 'student_listings_screen.dart';
 import 'teacher_pool_screen.dart';
 
 class _NavItem {
@@ -41,10 +43,16 @@ class _HomeShellState extends State<HomeShell> {
   List<_NavItem> _itemsFor(UserRole role) {
     return [
       _NavItem('Keşfet', Icons.search, (_) => const BrowseScreen()),
-      if (role.isSeeker)
+      if (role.isSeeker) ...[
         _NavItem('Karşılaştır', Icons.compare_arrows, (_) => const CompareScreen()),
-      if (role == UserRole.teacher)
+        _NavItem('İlanlarım', Icons.post_add,
+            (_) => const StudentListingPanelScreen()),
+      ],
+      if (role == UserRole.teacher) ...[
+        _NavItem('Öğrenci İlanları', Icons.school,
+            (_) => const StudentListingsScreen()),
         _NavItem('İş İlanları', Icons.work, (_) => const JobsScreen()),
+      ],
       if (role == UserRole.institution) ...[
         _NavItem('Öğretmen Havuzu', Icons.groups, (_) => const TeacherPoolScreen()),
         _NavItem('İş İlanlarım', Icons.work, (_) => const JobsScreen()),
@@ -52,7 +60,7 @@ class _HomeShellState extends State<HomeShell> {
       _NavItem('Teklifler', Icons.local_offer, (_) => const OffersScreen()),
       _NavItem('Mesajlar', Icons.chat_bubble_outline, (_) => const MessagesScreen()),
       if (role.isEducator)
-        _NavItem('Profilim', Icons.badge, (_) => const MyProfileScreen()),
+        _NavItem('Panelim', Icons.badge, (_) => const ProviderPanelScreen()),
     ];
   }
 

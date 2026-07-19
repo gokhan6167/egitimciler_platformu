@@ -209,6 +209,7 @@ class ProviderProfile {
     required this.name,
     required this.type,
     required this.city,
+    this.district = '',
     required this.description,
     required this.monthlyPrice,
     List<String>? photoUrls,
@@ -237,12 +238,22 @@ class ProviderProfile {
   String name;
   ProviderType type;
   String city;
+
+  /// District within the city; pickers are fed from data/iller.dart.
+  String district;
   String description;
   double monthlyPrice;
   final List<String> photoUrls;
 
   /// Moderation state; only published listings appear in search.
   ListingStatus status = ListingStatus.published;
+
+  /// Publish date used by the "Yeni eklenen" sort.
+  DateTime createdAt = DateTime(2026, 1, 1);
+
+  /// True while the owner has edits not yet submitted for review
+  /// (drives the panel status chip: Yayında → Kaydedilmemiş → Onay bekliyor).
+  bool hasUnsavedChanges = false;
 
   /// Card badge from the design: "Doğrulanmış", "Öne çıkan",
   /// "En çok tercih" veya "Yeni".
@@ -256,6 +267,9 @@ class ProviderProfile {
 
   /// Street address line for the location card (city is separate).
   String? address;
+
+  /// Contact phone shown in the panel's "İletişim & konum" card.
+  String? phone;
 
   /// Teacher-specific: per-lesson price (60 min), shown as "/ders (60 dk)".
   double? lessonPrice;
@@ -289,6 +303,150 @@ class ProviderProfile {
         ? 0
         : visible.map((r) => r.stars).reduce((a, b) => a + b) / visible.length;
   }
+}
+
+/// Status flow of a student listing (closed network: only teachers browse).
+enum StudentListingStatus { active, matched, closed }
+
+extension StudentListingStatusX on StudentListingStatus {
+  String get labelTr => switch (this) {
+        StudentListingStatus.active => 'Yayında',
+        StudentListingStatus.matched => 'Eşleşti',
+        StudentListingStatus.closed => 'Kapandı',
+      };
+}
+
+enum BidStatus { pending, accepted, rejected }
+
+/// A teacher's offer on a student listing.
+class ListingBid {
+  ListingBid({
+    required this.id,
+    required this.teacherUserId,
+    required this.listingId,
+    required this.price,
+    required this.message,
+    required this.createdAt,
+    this.status = BidStatus.pending,
+  });
+
+  final String id;
+  final String teacherUserId;
+  final String listingId;
+  final double price;
+  final String message;
+  final DateTime createdAt;
+  BidStatus status;
+}
+
+/// A lesson request posted by a parent/student; visible ONLY to teachers.
+/// Only the owner's first name is ever shown (privacy rule from the design).
+class StudentListing {
+  StudentListing({
+    required this.id,
+    required this.ownerUserId,
+    required this.title,
+    required this.subject,
+    required this.level,
+    required this.city,
+    this.district = '',
+    required this.budget,
+    required this.schedule,
+    required this.mode,
+    required this.description,
+    required this.createdAt,
+    this.startNow = false,
+    this.status = StudentListingStatus.active,
+  });
+
+  final String id;
+  final String ownerUserId;
+  String title;
+  String subject;
+
+  /// Grade/level, e.g. "8. sınıf (LGS)".
+  String level;
+  String city;
+  String district;
+
+  /// Monthly budget in TL (upper bound the family stated).
+  double budget;
+
+  /// e.g. "Hafta sonu", "Hafta içi akşam".
+  String schedule;
+
+  /// "Evde ders" / "Online" / "Fark etmez".
+  String mode;
+  String description;
+  final DateTime createdAt;
+
+  /// "Hemen başlayacak" badge + sort option.
+  bool startNow;
+  StudentListingStatus status;
+}
+
+/// Who a pricing plan is sold to (Ücretlendirme page tabs + add-ons).
+enum PlanAudience { institution, teacher, addon }
+
+extension PlanAudienceX on PlanAudience {
+  String get labelTr => switch (this) {
+        PlanAudience.institution => 'Kurumlar',
+        PlanAudience.teacher => 'Öğretmenler',
+        PlanAudience.addon => 'Ek ürünler',
+      };
+}
+
+/// A sellable package. Managed in the admin "Paketler" section; the
+/// Ücretlendirme page renders straight from this list so price edits
+/// there are reflected immediately.
+class PricingPlan {
+  PricingPlan({
+    required this.id,
+    required this.audience,
+    required this.name,
+    this.desc = '',
+    this.cta = '',
+    required this.price,
+    required this.period,
+    List<String>? features,
+    this.popular = false,
+    this.subscribers = 0,
+  }) : features = features ?? [];
+
+  final String id;
+  final PlanAudience audience;
+  String name;
+
+  /// Short tagline under the plan name, e.g. "Büyüyen kurumlar için".
+  final String desc;
+
+  /// Button label, e.g. "Premium'a geç".
+  final String cta;
+
+  /// TL; 0 renders as "₺0".
+  double price;
+
+  /// e.g. "/ay", "/yıl", "/hafta", "/ilan".
+  final String period;
+  final List<String> features;
+  final bool popular;
+
+  /// Active subscription count for the admin revenue cards (MRR = Σ price×subs
+  /// of monthly plans).
+  int subscribers;
+
+  /// Admin can pause sales; paused plans are greyed out on Ücretlendirme.
+  bool onSale = true;
+}
+
+/// Admin-managed slider bounds for a search page's price filter
+/// (the "ücret aralığı" groups in filter management hold min/max/step).
+class PriceRangeConfig {
+  PriceRangeConfig({required this.min, required this.max, required this.step});
+
+  double min;
+  double max;
+  double step;
 }
 
 class ChatMessage {
@@ -370,8 +528,10 @@ class JobPosting {
     required this.salaryText,
     required this.description,
     required this.createdAt,
+    List<String>? benefits,
     List<String>? applicantUserIds,
-  }) : applicantUserIds = applicantUserIds ?? [];
+  })  : benefits = benefits ?? [],
+        applicantUserIds = applicantUserIds ?? [];
 
   final String id;
   final String institutionUserId;
@@ -382,6 +542,9 @@ class JobPosting {
   final String salaryText;
   final String description;
   final DateTime createdAt;
+
+  /// Perks like "Yemek", "Servis", "SGK + özel sağlık" from the job form.
+  final List<String> benefits;
   final List<String> applicantUserIds;
 
   /// Closed by an admin or the institution; hidden from teachers when false.

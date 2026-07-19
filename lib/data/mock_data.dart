@@ -965,9 +965,12 @@ final List<ProviderProfile> seedProviders = [
     ],
   ),
   ..._pendingProviders,
-]..forEach((p) {
+]..asMap().forEach((i, p) {
     final badge = _badges[p.id];
     if (badge != null) p.badge = badge;
+    p.district = _districts[p.id] ?? '';
+    // Staggered publish dates for the "Yeni eklenen" sort.
+    p.createdAt = DateTime(2026, 2, 1).add(Duration(days: i * 7));
   });
 
 /// Listings waiting for admin approval — hidden from public search.
@@ -996,6 +999,285 @@ final List<ProviderProfile> _pendingProviders = [
     features: ['Birebir Ders', 'AYT Fizik'],
   )..status = ListingStatus.pending,
 ];
+
+/// District per listing id — pickers and filters read from data/iller.dart.
+const Map<String, String> _districts = {
+  'p_kurum1': 'Kadıköy',
+  'p_kurum2': 'Çankaya',
+  'p_kurum3': 'Konak',
+  'p_ogretmen1': 'Kadıköy',
+  'p_ogretmen2': 'Yenimahalle',
+  'p_ogretmen3': 'Bornova',
+  'p_okul2': 'Çankaya',
+  'p_okul3': 'Karşıyaka',
+  'p_okul4': 'Nilüfer',
+  'p_okul5': 'Muratpaşa',
+  'p_dershane2': 'Üsküdar',
+  'p_dershane3': 'Bornova',
+  'p_dershane4': 'Osmangazi',
+  'p_dershane5': 'Kepez',
+  'p_kurs2': 'Beşiktaş',
+  'p_kurs3': 'Keçiören',
+  'p_kurs4': 'Yıldırım',
+  'p_kurs5': 'Konyaaltı',
+  'p_bekleyen1': 'Selçuklu',
+  'p_bekleyen2': 'Nilüfer',
+};
+
+/// Student lesson requests (closed network: teachers only).
+/// Fresh copies per call so AppState instances stay independent.
+List<StudentListing> buildStudentListings() => [
+      StudentListing(
+        id: 'sl1',
+        ownerUserId: 'u_veli',
+        title: 'LGS matematik için haftada 2 gün özel ders',
+        subject: 'Matematik',
+        level: '8. sınıf (LGS)',
+        city: 'İstanbul',
+        district: 'Kadıköy',
+        budget: 1200,
+        schedule: 'Hafta içi akşam',
+        mode: 'Evde ders',
+        description:
+            'Oğlum 8. sınıfa geçti, matematik netleri 10 civarında. LGS\'ye '
+            'kadar düzenli çalışacak sabırlı bir öğretmen arıyoruz.',
+        createdAt: DateTime(2026, 7, 14),
+        startNow: true,
+      ),
+      StudentListing(
+        id: 'sl2',
+        ownerUserId: 'u_ogrenci2',
+        title: 'AYT fizik takviyesi (online olabilir)',
+        subject: 'Fizik',
+        level: '12. sınıf (YKS)',
+        city: 'İstanbul',
+        district: 'Üsküdar',
+        budget: 900,
+        schedule: 'Hafta sonu',
+        mode: 'Online',
+        description:
+            'TYT fiziğim iyi ama AYT problemlerinde zorlanıyorum. Konu '
+            'anlatımından çok soru çözümü odaklı ders istiyorum.',
+        createdAt: DateTime(2026, 7, 12),
+      ),
+      StudentListing(
+        id: 'sl3',
+        ownerUserId: 'u_veli2',
+        title: 'İlkokul 3. sınıf okuma-yazma desteği',
+        subject: 'Türkçe',
+        level: '3. sınıf',
+        city: 'İzmir',
+        district: 'Karşıyaka',
+        budget: 600,
+        schedule: 'Hafta içi gündüz',
+        mode: 'Evde ders',
+        description:
+            'Kızımın okuma hızı sınıf ortalamasının altında; oyunla öğreten, '
+            'sınıf öğretmenliği mezunu biri olursa çok seviniriz.',
+        createdAt: DateTime(2026, 7, 10),
+      ),
+      StudentListing(
+        id: 'sl4',
+        ownerUserId: 'u_ogrenci5',
+        title: 'Konservatuvar hazırlık — şan dersi',
+        subject: 'Müzik',
+        level: 'Lise (11. sınıf)',
+        city: 'Antalya',
+        district: 'Muratpaşa',
+        budget: 800,
+        schedule: 'Hafta sonu',
+        mode: 'Fark etmez',
+        description:
+            'Konservatuvar şan bölümüne hazırlanıyorum; repertuvar ve '
+            'diyafram tekniği çalıştıracak hoca arıyorum.',
+        createdAt: DateTime(2026, 7, 8),
+      ),
+      StudentListing(
+        id: 'sl5',
+        ownerUserId: 'u_veli5',
+        title: 'İngilizce konuşma pratiği (7. sınıf)',
+        subject: 'İngilizce',
+        level: '7. sınıf',
+        city: 'Ankara',
+        district: 'Çankaya',
+        budget: 700,
+        schedule: 'Hafta içi akşam',
+        mode: 'Online',
+        description:
+            'Gramer bilgisi iyi ama konuşmaya çekiniyor. Oyunlaştırılmış, '
+            'konuşma ağırlıklı online ders arıyoruz.',
+        createdAt: DateTime(2026, 7, 16),
+        startNow: true,
+      ),
+    ];
+
+List<ListingBid> buildSeedBids() => [
+      ListingBid(
+        id: 'b1',
+        teacherUserId: 'u_ogretmen1',
+        listingId: 'sl1',
+        price: 1400,
+        message: 'Merhaba, Kadıköy çevresinde evde ders veriyorum. İlk ders '
+            'seviye tespiti olarak ücretsiz.',
+        createdAt: DateTime(2026, 7, 15, 10, 30),
+      ),
+      ListingBid(
+        id: 'b2',
+        teacherUserId: 'u_ogretmen3',
+        listingId: 'sl2',
+        price: 900,
+        message: 'AYT fizik için soru çözüm kampı formatında online '
+            'çalışabiliriz; deneme analizleri dahil.',
+        createdAt: DateTime(2026, 7, 13, 18, 45),
+      ),
+    ];
+
+/// Packages shown on Ücretlendirme; the admin "Paketler" section edits
+/// these same objects (price input, sales toggle) so both stay in sync.
+List<PricingPlan> buildPricingPlans() => [
+      PricingPlan(
+        id: 'plan_baslangic',
+        audience: PlanAudience.institution,
+        name: 'Başlangıç',
+        desc: 'Platformu denemek için',
+        cta: 'Ücretsiz başla',
+        price: 0,
+        period: '',
+        features: [
+          '1 aktif ilan',
+          '5 fotoğraf',
+          'Teklif alma & mesajlaşma',
+          'Doğrulama rozeti başvurusu',
+          'Temel görüntülenme sayacı',
+        ],
+        subscribers: 132,
+      ),
+      PricingPlan(
+        id: 'plan_premium',
+        audience: PlanAudience.institution,
+        name: 'Premium',
+        desc: 'Büyüyen kurumlar için',
+        cta: 'Premium\'a geç',
+        price: 1490,
+        period: '/ay',
+        popular: true,
+        features: [
+          '3 aktif ilan + tanıtım videosu',
+          'Sınırsız fotoğraf',
+          'Ayda 2 hafta arama sonucunda öne çıkarma',
+          'Detaylı istatistik panosu (görüntülenme, teklif, dönüşüm)',
+          '5 aktif iş ilanı (kapalı ağ)',
+          'Öncelikli destek',
+        ],
+        subscribers: 48,
+      ),
+      PricingPlan(
+        id: 'plan_kurumsal',
+        audience: PlanAudience.institution,
+        name: 'Kurumsal',
+        desc: 'Çok şubeli kurumlar için',
+        cta: 'Bize ulaşın',
+        price: 3990,
+        period: '/ay',
+        features: [
+          'Sınırsız ilan & şube yönetimi',
+          'Sınırsız iş ilanı',
+          'Sponsorlu video kotası (ayda 2 hafta)',
+          'Şube bazlı istatistik & rapor dışa aktarma',
+          'Özel hesap yöneticisi',
+        ],
+        subscribers: 9,
+      ),
+      PricingPlan(
+        id: 'plan_ogretmen_free',
+        audience: PlanAudience.teacher,
+        name: 'Ücretsiz',
+        desc: 'Her öğretmen için',
+        cta: 'Profil oluştur',
+        price: 0,
+        period: '',
+        features: [
+          'Doğrulanmış profil + tanışma videosu',
+          'Ayda 5 öğrenci ilanına teklif',
+          'Mesajlaşma & takvim',
+          'Komisyonsuz ders ücreti',
+        ],
+        subscribers: 310,
+      ),
+      PricingPlan(
+        id: 'plan_ogretmen_pro',
+        audience: PlanAudience.teacher,
+        name: 'Pro',
+        desc: 'Aktif ders verenler için',
+        cta: 'Pro\'ya geç',
+        price: 190,
+        period: '/ay',
+        popular: true,
+        features: [
+          'Sınırsız teklif hakkı',
+          'Aramada öne çıkan profil rozeti',
+          'Profil istatistikleri (görüntülenme, dönüşüm)',
+          'İş ilanlarına öncelikli başvuru',
+        ],
+        subscribers: 86,
+      ),
+      PricingPlan(
+        id: 'plan_ogretmen_yillik',
+        audience: PlanAudience.teacher,
+        name: 'Pro Yıllık',
+        desc: '2 ay hediye',
+        cta: 'Yıllık başla',
+        price: 1900,
+        period: '/yıl',
+        features: [
+          'Tüm Pro özellikleri',
+          '12 ay fiyat sabitleme',
+          'Yıllık gelir raporu (vergi beyanı için)',
+        ],
+        subscribers: 41,
+      ),
+      PricingPlan(
+        id: 'addon_video',
+        audience: PlanAudience.addon,
+        name: 'Sponsorlu kısa video',
+        desc: 'Tanıtım videonuz ana sayfadaki kısa video akışında '
+            '\'Sponsorlu\' rozetiyle döner; hedef il seçilebilir.',
+        price: 490,
+        period: '/hafta',
+        subscribers: 12,
+      ),
+      PricingPlan(
+        id: 'addon_one_cikarma',
+        audience: PlanAudience.addon,
+        name: 'Öne çıkarma',
+        desc: 'İlanınız kendi kategorisindeki arama sonuçlarının en üstünde '
+            '\'Öne çıkan\' şeridiyle gösterilir.',
+        price: 290,
+        period: '/hafta',
+        subscribers: 23,
+      ),
+      PricingPlan(
+        id: 'addon_is_ilani',
+        audience: PlanAudience.addon,
+        name: 'İş ilanı paketi',
+        desc: 'Başlangıç paketindeki kurumlar için tekil iş ilanı yayını — '
+            'yalnızca öğretmenlere görünür, 30 gün.',
+        price: 190,
+        period: '/ilan',
+        subscribers: 17,
+      ),
+    ];
+
+/// Slider bounds per search page (README: okul ₺2.000–15.000/500,
+/// kurs ₺500–6.000/250, dershane ₺1.000–8.000/250, öğretmen ve öğrenci
+/// bütçesi ₺200–1.500/50). Admin "ücret aralığı" groups edit these.
+Map<String, PriceRangeConfig> buildPriceRanges() => {
+      'privateSchool': PriceRangeConfig(min: 2000, max: 15000, step: 500),
+      'course': PriceRangeConfig(min: 500, max: 6000, step: 250),
+      'dershane': PriceRangeConfig(min: 1000, max: 8000, step: 250),
+      'privateTeacher': PriceRangeConfig(min: 200, max: 1500, step: 50),
+      'studentBudget': PriceRangeConfig(min: 200, max: 1500, step: 50),
+    };
 
 final List<Conversation> seedConversations = [
   Conversation(
@@ -1043,6 +1325,7 @@ final List<JobPosting> seedJobs = [
     description: 'Lise kademesi için tam zamanlı matematik öğretmeni arıyoruz. '
         'En az 3 yıl deneyim beklenmektedir.',
     createdAt: DateTime(2026, 7, 1),
+    benefits: ['Yemek', 'Servis', 'SGK + özel sağlık'],
   ),
   JobPosting(
     id: 'j2',
@@ -1054,5 +1337,6 @@ final List<JobPosting> seedJobs = [
     salaryText: 'Ders başı 800 TL',
     description: 'Hafta sonu yetişkin grupları için konuşma odaklı İngilizce eğitmeni.',
     createdAt: DateTime(2026, 7, 8),
+    benefits: ['Esnek çalışma saatleri', 'Ders başı prim'],
   ),
 ];
